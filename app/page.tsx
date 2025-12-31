@@ -24,6 +24,8 @@ import {
   Zap,
   ArrowRight
 } from 'lucide-react'
+// Importamos la función track de Vercel Analytics
+import { track } from '@vercel/analytics/react'
 
 // ============================================================================
 // CONFIGURACIÓN & DATOS
@@ -127,7 +129,6 @@ function getSessionSeed(): number {
 // COMPONENTES UI
 // ============================================================================
 
-// Efecto de ruido cinematográfico
 const NoiseOverlay = () => (
   <div 
     className="fixed inset-0 pointer-events-none z-[100] opacity-[0.025] mix-blend-overlay"
@@ -137,7 +138,6 @@ const NoiseOverlay = () => (
   />
 )
 
-// Partículas flotantes
 const FloatingParticles = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
     {[...Array(20)].map((_, i) => (
@@ -164,7 +164,6 @@ const FloatingParticles = () => (
   </div>
 )
 
-// Botón Premium con efecto shine
 const ShinyButton = ({ 
   children, 
   onClick, 
@@ -237,7 +236,6 @@ const Header = () => {
       >
         <div className="container mx-auto px-6 lg:px-12">
           <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? 'py-4' : 'py-6'}`}>
-            {/* Logo */}
             <motion.a
               href="https://manuelsolis.com"
               target="_blank"
@@ -259,7 +257,6 @@ const Header = () => {
               </div>
             </motion.a>
 
-            {/* Nav Desktop */}
             <div className="hidden lg:flex items-center gap-12">
               {navItems.map((item) => (
                 <motion.a
@@ -278,7 +275,6 @@ const Header = () => {
               ))}
             </div>
 
-            {/* CTA + Mobile */}
             <div className="flex items-center gap-4">
               <motion.a
                 href="https://manuelsolis.com"
@@ -304,7 +300,6 @@ const Header = () => {
         </div>
       </motion.nav>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div
@@ -333,25 +328,13 @@ const Header = () => {
 }
 
 // ============================================================================
-// INSTRUCCIONES EN HERO
+// HERO & COMPONENTS
 // ============================================================================
 const HeroInstructions = () => {
   const steps = [
-    { 
-      icon: Target, 
-      number: "01",
-      text: "Elige cualquier video" 
-    },
-    { 
-      icon: Play, 
-      number: "02",
-      text: "Observa y aprende" 
-    },
-    { 
-      icon: Zap, 
-      number: "03",
-      text: "Aplica al instante" 
-    }
+    { icon: Target, number: "01", text: "Elige cualquier video" },
+    { icon: Play, number: "02", text: "Observa y aprende" },
+    { icon: Zap, number: "03", text: "Aplica al instante" }
   ]
 
   return (
@@ -361,7 +344,6 @@ const HeroInstructions = () => {
       transition={{ duration: 1, delay: 1 }}
       className="w-full max-w-5xl mx-auto"
     >
-      {/* Desktop & Tablet */}
       <div className="hidden md:grid md:grid-cols-3 gap-6 lg:gap-8">
         {steps.map((step, i) => (
           <motion.div
@@ -373,18 +355,13 @@ const HeroInstructions = () => {
             className="group relative"
           >
             <div className="relative p-8 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all duration-500">
-              {/* Number background */}
               <div className="absolute top-4 right-4 text-6xl font-black text-white/[0.03] leading-none">
                 {step.number}
               </div>
-              
-              {/* Icon */}
               <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:from-[#D4AF37]/40 group-hover:to-[#D4AF37]/20 transition-all duration-500">
                 <step.icon className="w-7 h-7 text-[#D4AF37]" />
                 <div className="absolute inset-0 rounded-xl bg-[#D4AF37]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-
-              {/* Text */}
               <h3 className="text-white text-lg font-bold relative z-10 group-hover:text-[#D4AF37] transition-colors duration-300">
                 {step.text}
               </h3>
@@ -393,7 +370,6 @@ const HeroInstructions = () => {
         ))}
       </div>
 
-      {/* Mobile */}
       <div className="md:hidden flex flex-col gap-4">
         {steps.map((step, i) => (
           <motion.div
@@ -404,17 +380,12 @@ const HeroInstructions = () => {
             className="relative p-6 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10"
           >
             <div className="flex items-center gap-4">
-              {/* Number */}
               <div className="text-3xl font-black text-[#D4AF37]/30">
                 {step.number}
               </div>
-              
-              {/* Icon */}
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 flex items-center justify-center shrink-0">
                 <step.icon className="w-6 h-6 text-[#D4AF37]" />
               </div>
-
-              {/* Text */}
               <h3 className="text-white text-base font-bold flex-1">{step.text}</h3>
             </div>
           </motion.div>
@@ -424,9 +395,6 @@ const HeroInstructions = () => {
   )
 }
 
-// ============================================================================
-// HERO
-// ============================================================================
 const Hero = () => {
   const { scrollY } = useScroll()
   const y1 = useTransform(scrollY, [0, 600], [0, 200])
@@ -439,9 +407,7 @@ const Hero = () => {
 
   return (
     <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-[#0B1120]">
-        {/* Gradient orbs */}
         <motion.div
           animate={{ 
             scale: [1, 1.2, 1],
@@ -458,20 +424,14 @@ const Hero = () => {
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-[-30%] left-[-20%] w-[800px] h-[800px] bg-[#D4AF37]/10 rounded-full blur-[120px]"
         />
-        
-        {/* Animated grid */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(212,175,55,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(212,175,55,0.03)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]" />
-        
-        {/* Floating particles */}
         <FloatingParticles />
       </div>
 
-      {/* Content */}
       <motion.div 
         style={{ y: y1, opacity, scale }}
         className="container mx-auto px-6 lg:px-12 relative z-10 text-center pt-24"
       >
-        {/* Main Title */}
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
@@ -485,10 +445,8 @@ const Hero = () => {
           </h1>
         </motion.div>
 
-        {/* Instrucciones */}
         <HeroInstructions />
 
-        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -504,9 +462,6 @@ const Hero = () => {
   )
 }
 
-// ============================================================================
-// CARRUSEL DE VIDEOS DESTACADOS
-// ============================================================================
 const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => void }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
@@ -555,7 +510,6 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
         </motion.div>
 
         <div className="relative max-w-5xl mx-auto">
-          {/* Carousel container */}
           <div className="relative aspect-video rounded-3xl overflow-hidden bg-[#111827]">
             <AnimatePresence mode="wait">
               <motion.div
@@ -577,7 +531,6 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-transparent" />
                 
-                {/* Info overlay */}
                 <div className="absolute bottom-0 left-0 right-0 p-8">
                   <span className="inline-block px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#D4AF37]/20 text-[#D4AF37] backdrop-blur-xl border border-[#D4AF37]/20 mb-4">
                     {videosData[currentIndex].category}
@@ -593,7 +546,6 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
             </AnimatePresence>
           </div>
 
-          {/* Navigation */}
           <div className="flex items-center justify-between mt-6">
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -604,7 +556,6 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
               <ChevronLeft className="w-5 h-5" />
             </motion.button>
 
-            {/* Dots */}
             <div className="flex items-center gap-2">
               {videosData.map((_, idx) => (
                 <button
@@ -638,7 +589,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
 }
 
 // ============================================================================
-// VIDEO CARD (Premium design)
+// VIDEO CARD (Con Tracking de Click)
 // ============================================================================
 const VideoCard = ({ 
   video, 
@@ -660,6 +611,15 @@ const VideoCard = ({
     mouseY.set(e.clientY - rect.top)
   }
 
+  // Tracking: Video Select
+  const handleClick = () => {
+    track('Video Select', { 
+      videoId: video.id, 
+      title: video.title 
+    })
+    onPlay()
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -667,12 +627,11 @@ const VideoCard = ({
       viewport={{ once: true }}
       transition={{ duration: 0.7, delay: index * 0.1 }}
       onMouseMove={handleMouseMove}
-      onClick={onPlay}
+      onClick={handleClick}
       className={`group relative rounded-3xl overflow-hidden cursor-pointer bg-[#111827] transition-all duration-700 ${
         isActive ? 'ring-2 ring-[#D4AF37]' : ''
       }`}
     >
-      {/* Spotlight effect */}
       <motion.div
         className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
@@ -686,7 +645,6 @@ const VideoCard = ({
         }}
       />
 
-      {/* Thumbnail */}
       <div className="relative aspect-[16/10] overflow-hidden bg-black">
         <video
           src={video.videoUrl}
@@ -696,10 +654,8 @@ const VideoCard = ({
           playsInline
         />
         
-        {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/50 to-transparent" />
         
-        {/* Play button */}
         <div className="absolute inset-0 flex items-center justify-center">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -710,12 +666,10 @@ const VideoCard = ({
           </motion.div>
         </div>
 
-        {/* Duration badge */}
         <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
           <span className="text-white text-[11px] font-mono font-medium">{video.duration}</span>
         </div>
 
-        {/* Category badge */}
         <div className="absolute top-5 left-5">
           <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.15em] font-bold bg-[#D4AF37]/20 text-[#D4AF37] backdrop-blur-xl border border-[#D4AF37]/20">
             {video.category}
@@ -723,7 +677,6 @@ const VideoCard = ({
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-8">
         <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-1">
           {video.title}
@@ -745,14 +698,13 @@ const VideoCard = ({
         </div>
       </div>
 
-      {/* Bottom glow */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37]/0 to-transparent group-hover:via-[#D4AF37]/50 transition-all duration-700" />
     </motion.div>
   )
 }
 
 // ============================================================================
-// VIDEO MODAL
+// VIDEO MODAL (Con Tracking de Progreso y Tiempo)
 // ============================================================================
 const VideoModal = ({
   isOpen,
@@ -773,10 +725,16 @@ const VideoModal = ({
 }) => {
   const [showEndCTA, setShowEndCTA] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  
+  // Tracking Refs
+  const hasStartedRef = useRef(false)
+  const progressMilestonesRef = useRef<Set<number>>(new Set())
 
-  // Reset CTA when video changes
+  // Reset tracking when video changes
   useEffect(() => {
     setShowEndCTA(false)
+    hasStartedRef.current = false
+    progressMilestonesRef.current.clear()
   }, [video?.id])
 
   // Handle escape
@@ -794,7 +752,44 @@ const VideoModal = ({
     }
   }, [isOpen, onClose])
 
+  // Tracking: Video Play Start
+  const handlePlay = () => {
+    if (!hasStartedRef.current && video) {
+      track('Video Start', { 
+        videoId: video.id, 
+        title: video.title 
+      })
+      hasStartedRef.current = true
+    }
+  }
+
+  // Tracking: Video Progress (25%, 50%, 75%)
+  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+    if (!video) return
+    const v = e.currentTarget
+    const percent = (v.currentTime / v.duration) * 100
+    
+    const milestones = [25, 50, 75]
+    milestones.forEach(m => {
+      if (percent >= m && !progressMilestonesRef.current.has(m)) {
+        track('Video Progress', { 
+          videoId: video.id, 
+          title: video.title, 
+          percentage: m 
+        })
+        progressMilestonesRef.current.add(m)
+      }
+    })
+  }
+
+  // Tracking: Video Complete
   const handleVideoEnd = () => {
+    if (video) {
+      track('Video Complete', { 
+        videoId: video.id, 
+        title: video.title 
+      })
+    }
     setShowEndCTA(true)
   }
 
@@ -820,10 +815,8 @@ const VideoModal = ({
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8"
           onClick={onClose}
         >
-          {/* Backdrop */}
           <div className="absolute inset-0 bg-[#0B1120]/98 backdrop-blur-2xl" />
 
-          {/* Modal */}
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 50 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -832,7 +825,6 @@ const VideoModal = ({
             className="relative w-full max-w-6xl bg-[#111827] rounded-3xl overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Close button */}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -842,7 +834,6 @@ const VideoModal = ({
               <X className="w-5 h-5 text-white" />
             </motion.button>
 
-            {/* Video */}
             <div className="relative aspect-video bg-black">
               <video
                 ref={videoRef}
@@ -850,10 +841,11 @@ const VideoModal = ({
                 className="w-full h-full object-contain"
                 controls
                 autoPlay
+                onPlay={handlePlay}
+                onTimeUpdate={handleTimeUpdate}
                 onEnded={handleVideoEnd}
               />
 
-              {/* End CTA Overlay */}
               <AnimatePresence>
                 {showEndCTA && (
                   <motion.div
@@ -893,7 +885,6 @@ const VideoModal = ({
               </AnimatePresence>
             </div>
 
-            {/* Info bar */}
             <div className="p-8 bg-gradient-to-r from-[#111827] to-[#0B1120] flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -960,7 +951,6 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
     ? shuffledVideos 
     : shuffledVideos.filter(v => v.category === filter)
 
-  // Si hay un video inicial, ábrelo
   useEffect(() => {
     if (initialVideoId && filteredVideos.length > 0) {
       const index = filteredVideos.findIndex(v => v.id === initialVideoId)
@@ -994,16 +984,13 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
 
   return (
     <section id="videos" className="relative py-32 overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-[#0B1120]" />
       <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#0a0f1a] to-transparent" />
       <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#060a12] to-transparent" />
       
-      {/* Ambient light */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#D4AF37]/5 rounded-full blur-[200px] pointer-events-none" />
 
       <div ref={containerRef} className="container mx-auto px-6 lg:px-12 relative z-10">
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -1024,7 +1011,6 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
           </div>
 
           <div className="flex flex-wrap items-center gap-4">
-            {/* Filter pills */}
             <div className="flex flex-wrap gap-2">
               {categories.map(cat => (
                 <motion.button
@@ -1043,7 +1029,6 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
               ))}
             </div>
 
-            {/* Re-randomize */}
             <motion.button
               whileHover={{ scale: 1.05, rotate: 180 }}
               whileTap={{ scale: 0.95 }}
@@ -1056,7 +1041,6 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
           </div>
         </motion.div>
 
-        {/* Video Grid */}
         <motion.div 
           layout
           className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10"
@@ -1075,7 +1059,6 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
         </motion.div>
       </div>
 
-      {/* Modal */}
       <VideoModal
         isOpen={selectedIndex !== null}
         video={selectedIndex !== null ? filteredVideos[selectedIndex] : null}
@@ -1099,7 +1082,6 @@ const Footer = () => (
 
     <div className="container mx-auto px-6 lg:px-12 relative z-10">
       <div className="flex flex-col items-center text-center">
-        {/* Logo */}
         <div className="flex items-center gap-3 mb-8 opacity-60">
           <div className="w-12 h-12">
             <img 
@@ -1138,7 +1120,6 @@ export default function DramatizacionesPage() {
 
   const handleVideoSelect = (videoId: string) => {
     setSelectedVideoId(videoId)
-    // Scroll to videos section
     setTimeout(() => {
       document.getElementById('videos')?.scrollIntoView({ behavior: 'smooth' })
     }, 100)
@@ -1153,7 +1134,6 @@ export default function DramatizacionesPage() {
       <VideoGallery initialVideoId={selectedVideoId} />
       <Footer />
 
-      {/* Custom styles */}
       <style jsx global>{`
         @keyframes gradient-x {
           0%, 100% { background-position: 0% 50%; }
