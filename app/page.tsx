@@ -763,13 +763,15 @@ const VideoModal = ({
     }
   }
 
-  // Tracking: Video Progress (25%, 50%, 75%) con nombre específico
+  // Tracking: Video Progress (5%, 10%, ... 100%) con nombre específico
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (!video) return
     const v = e.currentTarget
     const percent = (v.currentTime / v.duration) * 100
     
-    const milestones = [25, 50, 75]
+    // Generar hitos de 5 en 5 hasta 100: [5, 10, 15, ..., 100]
+    const milestones = Array.from({ length: 20 }, (_, i) => (i + 1) * 5)
+    
     milestones.forEach(m => {
       if (percent >= m && !progressMilestonesRef.current.has(m)) {
         track(`[Progress ${m}%] ${video.title}`, { 
