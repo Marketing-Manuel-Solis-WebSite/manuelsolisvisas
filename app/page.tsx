@@ -24,8 +24,11 @@ import {
   Zap,
   ArrowRight
 } from 'lucide-react'
-// Importamos la función track de Vercel Analytics
-import { track } from '@vercel/analytics/react'
+
+// MOCK ANALYTICS (Replaces external dependency to fix build error)
+const track = (name: string, properties?: any) => {
+  console.log(`[Analytics] ${name}`, properties)
+}
 
 // ============================================================================
 // CONFIGURACIÓN & DATOS
@@ -49,7 +52,7 @@ const videosData: VideoItem[] = [
     duration: '3:24',
     description: 'Guía completa sobre el proceso de solicitud VAWA y requisitos legales necesarios.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/Preview%20VAWA.mp4',
-    thumbnail: '/images/thumbnail-1.jpg'
+    thumbnail: '/images/thumbnail-1.png'
   },
   {
     id: 'v2',
@@ -58,7 +61,7 @@ const videosData: VideoItem[] = [
     duration: '4:15',
     description: 'Segunda parte del proceso de visa U, requisitos y documentación requerida.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/PREVIEW%20VISA%20U2.mp4',
-    thumbnail: '/images/thumbnail-2.jpg'
+    thumbnail: '/images/thumbnail-2.png'
   },
   {
     id: 'v3',
@@ -67,7 +70,7 @@ const videosData: VideoItem[] = [
     duration: '3:45',
     description: 'Primera parte del proceso de visa U para víctimas de crímenes.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/PREVIEW%20VISA%20U1.mp4',
-    thumbnail: '/images/thumbnail-3.jpg'
+    thumbnail: '/images/thumbnail-3.png'
   },
   {
     id: 'v4',
@@ -76,7 +79,7 @@ const videosData: VideoItem[] = [
     duration: '5:20',
     description: 'Versión actualizada del proceso de visa T para víctimas de tráfico humano.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%202.mp4',
-    thumbnail: '/images/thumbnail-4.jpg'
+    thumbnail: '/images/thumbnail-4.png'
   },
   {
     id: 'v5',
@@ -85,7 +88,7 @@ const videosData: VideoItem[] = [
     duration: '4:50',
     description: 'Primera versión del proceso de visa T y requisitos legales.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%2001.mp4',
-    thumbnail: '/images/thumbnail-5.jpg'
+    thumbnail: '/images/thumbnail-5.png'
   },
   {
     id: 'v6',
@@ -94,7 +97,7 @@ const videosData: VideoItem[] = [
     duration: '6:10',
     description: 'Guía completa sobre el Estatus Especial de Inmigrante Juvenil (SIJS).',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/Preview%20VISA%20SIJS.mp4',
-    thumbnail: '/images/thumbnail-6.jpg'
+    thumbnail: '/images/thumbnail-6.png'
   }
 ]
 
@@ -462,30 +465,44 @@ const Hero = () => {
   )
 }
 
+// ============================================================================
+// CAROUSEL CON IMAGEN SUPERPUESTA MEJORADA
+// ============================================================================
 const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => void }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
 
   useEffect(() => {
     if (!isAutoPlaying) return
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % videosData.length)
+      handleNext()
     }, 5000)
     return () => clearInterval(interval)
-  }, [isAutoPlaying])
+  }, [isAutoPlaying, currentIndex])
 
   const handlePrev = () => {
     setIsAutoPlaying(false)
+    setIsVideoLoaded(false)
     setCurrentIndex((prev) => (prev - 1 + videosData.length) % videosData.length)
   }
 
   const handleNext = () => {
-    setIsAutoPlaying(false)
+    // Si es automático, no seteamos false para que siga el loop
+    setIsVideoLoaded(false)
     setCurrentIndex((prev) => (prev + 1) % videosData.length)
   }
 
   const handleVideoClick = (videoId: string) => {
     onVideoSelect(videoId)
+  }
+
+  const onVideoDataLoaded = () => {
+    // Pequeño delay artificial para asegurar que la imagen se vea un instante
+    // antes de que el video arranque, evitando el "flash" negro
+    setTimeout(() => {
+      setIsVideoLoaded(true)
+    }, 500)
   }
 
   return (
@@ -510,7 +527,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
         </motion.div>
 
         <div className="relative max-w-5xl mx-auto">
-          <div className="relative aspect-video rounded-3xl overflow-hidden bg-[#111827]">
+          <div className="relative aspect-video rounded-3xl overflow-hidden bg-[#111827] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentIndex}
@@ -518,20 +535,34 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -100 }}
                 transition={{ duration: 0.5 }}
-                className="absolute inset-0 cursor-pointer"
+                className="absolute inset-0 cursor-pointer group"
                 onClick={() => handleVideoClick(videosData[currentIndex].id)}
               >
+                {/* 1. IMAGEN DE FONDO (Visible mientras carga el video) */}
+                <img
+                    src={videosData[currentIndex].thumbnail}
+                    alt={videosData[currentIndex].title}
+                    className="absolute inset-0 w-full h-full object-cover z-20"
+                    style={{ 
+                        opacity: isVideoLoaded ? 0 : 1,
+                        transition: 'opacity 0.8s ease-in-out'
+                    }}
+                />
+
+                {/* 2. VIDEO (Se carga detrás) */}
                 <video
                   src={videosData[currentIndex].videoUrl}
-                  className="w-full h-full object-cover"
-                  poster={videosData[currentIndex].thumbnail}
+                  className="w-full h-full object-cover z-10"
                   muted
                   loop
                   autoPlay
+                  playsInline
+                  onLoadedData={onVideoDataLoaded}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-transparent" />
                 
-                <div className="absolute bottom-0 left-0 right-0 p-8">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-transparent z-30 pointer-events-none" />
+                
+                <div className="absolute bottom-0 left-0 right-0 p-8 z-40">
                   <span className="inline-block px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#D4AF37]/20 text-[#D4AF37] backdrop-blur-xl border border-[#D4AF37]/20 mb-4">
                     {videosData[currentIndex].category}
                   </span>
@@ -542,6 +573,14 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                     {videosData[currentIndex].description}
                   </p>
                 </div>
+
+                {/* Play Icon Overlay */}
+                <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-20 h-20 rounded-full bg-[#D4AF37]/90 flex items-center justify-center backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform duration-300">
+                        <Play className="w-8 h-8 text-[#0B1120] ml-1" fill="currentColor" />
+                    </div>
+                </div>
+
               </motion.div>
             </AnimatePresence>
           </div>
@@ -563,6 +602,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                   onClick={() => {
                     setCurrentIndex(idx)
                     setIsAutoPlaying(false)
+                    setIsVideoLoaded(false)
                   }}
                   className={`transition-all duration-300 ${
                     idx === currentIndex
@@ -576,7 +616,10 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={handleNext}
+              onClick={() => {
+                  handleNext()
+                  setIsAutoPlaying(false)
+              }}
               className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white transition-all"
             >
               <ChevronRight className="w-5 h-5" />
@@ -589,7 +632,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
 }
 
 // ============================================================================
-// VIDEO CARD (Con Tracking de Click Mejorado)
+// VIDEO CARD OPTIMIZADO (Imagen Primero, Video en Hover)
 // ============================================================================
 const VideoCard = ({ 
   video, 
@@ -604,6 +647,8 @@ const VideoCard = ({
 }) => {
   const mouseX = useMotionValue(0)
   const mouseY = useMotionValue(0)
+  const [isHovered, setIsHovered] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -611,7 +656,21 @@ const VideoCard = ({
     mouseY.set(e.clientY - rect.top)
   }
 
-  // Tracking: Video Select con nombre específico
+  // Reproducir video solo en Hover para ahorrar recursos
+  useEffect(() => {
+    if (isHovered && videoRef.current) {
+        const playPromise = videoRef.current.play()
+        if (playPromise !== undefined) {
+            playPromise.catch(() => {
+                // Auto-play was prevented
+            })
+        }
+    } else if (!isHovered && videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.currentTime = 0
+    }
+  }, [isHovered])
+
   const handleClick = () => {
     track(`[Select] ${video.title}`, { 
       id: video.id,
@@ -627,13 +686,15 @@ const VideoCard = ({
       viewport={{ once: true }}
       transition={{ duration: 0.7, delay: index * 0.1 }}
       onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
       className={`group relative rounded-3xl overflow-hidden cursor-pointer bg-[#111827] transition-all duration-700 ${
         isActive ? 'ring-2 ring-[#D4AF37]' : ''
       }`}
     >
       <motion.div
-        className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30"
         style={{
           background: useMotionTemplate`
             radial-gradient(
@@ -646,38 +707,51 @@ const VideoCard = ({
       />
 
       <div className="relative aspect-[16/10] overflow-hidden bg-black">
+        {/* 1. IMAGEN DE PORTADA (Siempre visible por defecto) */}
+        <img 
+            src={video.thumbnail} 
+            alt={video.title}
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover z-10"
+        />
+
+        {/* 2. VIDEO (Solo visible en Hover) - preload="none" para optimizar carga */}
         <video
+          ref={videoRef}
           src={video.videoUrl}
-          className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110 brightness-75 group-hover:brightness-100"
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-20 ${
+              isHovered ? 'opacity-100' : 'opacity-0'
+          }`}
           muted
           loop
           playsInline
+          preload="none" 
         />
         
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/50 to-transparent z-20 pointer-events-none" />
         
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
-            whileHover={{ scale: 1 }}
-            className="w-20 h-20 rounded-full bg-[#D4AF37] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 shadow-[0_0_60px_rgba(212,175,55,0.5)]"
+            animate={{ scale: isHovered ? 1 : 0.8, opacity: isHovered ? 1 : 0 }}
+            className="w-20 h-20 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.5)]"
           >
             <Play className="w-8 h-8 text-[#0B1120] ml-1" fill="#0B1120" />
           </motion.div>
         </div>
 
-        <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
+        <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 z-30">
           <span className="text-white text-[11px] font-mono font-medium">{video.duration}</span>
         </div>
 
-        <div className="absolute top-5 left-5">
+        <div className="absolute top-5 left-5 z-30">
           <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.15em] font-bold bg-[#D4AF37]/20 text-[#D4AF37] backdrop-blur-xl border border-[#D4AF37]/20">
             {video.category}
           </span>
         </div>
       </div>
 
-      <div className="p-8">
+      <div className="p-8 relative z-30 bg-[#111827]">
         <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-1">
           {video.title}
         </h3>
@@ -698,13 +772,13 @@ const VideoCard = ({
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37]/0 to-transparent group-hover:via-[#D4AF37]/50 transition-all duration-700" />
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37]/0 to-transparent group-hover:via-[#D4AF37]/50 transition-all duration-700 z-30" />
     </motion.div>
   )
 }
 
 // ============================================================================
-// VIDEO MODAL (Con Tracking de Progreso y Tiempo Mejorado)
+// VIDEO MODAL (Sin Cambios Mayores, solo limpieza)
 // ============================================================================
 const VideoModal = ({
   isOpen,
@@ -726,18 +800,15 @@ const VideoModal = ({
   const [showEndCTA, setShowEndCTA] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   
-  // Tracking Refs
   const hasStartedRef = useRef(false)
   const progressMilestonesRef = useRef<Set<number>>(new Set())
 
-  // Reset tracking when video changes
   useEffect(() => {
     setShowEndCTA(false)
     hasStartedRef.current = false
     progressMilestonesRef.current.clear()
   }, [video?.id])
 
-  // Handle escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -752,7 +823,6 @@ const VideoModal = ({
     }
   }, [isOpen, onClose])
 
-  // Tracking: Video Play Start con nombre específico
   const handlePlay = () => {
     if (!hasStartedRef.current && video) {
       track(`[Start] ${video.title}`, { 
@@ -763,13 +833,11 @@ const VideoModal = ({
     }
   }
 
-  // Tracking: Video Progress (5%, 10%, ... 100%) con nombre específico
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (!video) return
     const v = e.currentTarget
     const percent = (v.currentTime / v.duration) * 100
     
-    // Generar hitos de 5 en 5 hasta 100: [5, 10, 15, ..., 100]
     const milestones = Array.from({ length: 20 }, (_, i) => (i + 1) * 5)
     
     milestones.forEach(m => {
@@ -782,7 +850,6 @@ const VideoModal = ({
     })
   }
 
-  // Tracking: Video Complete con nombre específico
   const handleVideoEnd = () => {
     if (video) {
       track(`[Complete] ${video.title}`, { 
