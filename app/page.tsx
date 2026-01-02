@@ -589,7 +589,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
 }
 
 // ============================================================================
-// VIDEO CARD (Con Tracking de Click)
+// VIDEO CARD (Con Tracking de Click Mejorado)
 // ============================================================================
 const VideoCard = ({ 
   video, 
@@ -611,11 +611,11 @@ const VideoCard = ({
     mouseY.set(e.clientY - rect.top)
   }
 
-  // Tracking: Video Select
+  // Tracking: Video Select con nombre específico
   const handleClick = () => {
-    track('Video Select', { 
-      videoId: video.id, 
-      title: video.title 
+    track(`[Select] ${video.title}`, { 
+      id: video.id,
+      category: video.category
     })
     onPlay()
   }
@@ -704,7 +704,7 @@ const VideoCard = ({
 }
 
 // ============================================================================
-// VIDEO MODAL (Con Tracking de Progreso y Tiempo)
+// VIDEO MODAL (Con Tracking de Progreso y Tiempo Mejorado)
 // ============================================================================
 const VideoModal = ({
   isOpen,
@@ -752,18 +752,18 @@ const VideoModal = ({
     }
   }, [isOpen, onClose])
 
-  // Tracking: Video Play Start
+  // Tracking: Video Play Start con nombre específico
   const handlePlay = () => {
     if (!hasStartedRef.current && video) {
-      track('Video Start', { 
-        videoId: video.id, 
-        title: video.title 
+      track(`[Start] ${video.title}`, { 
+        id: video.id,
+        category: video.category
       })
       hasStartedRef.current = true
     }
   }
 
-  // Tracking: Video Progress (25%, 50%, 75%)
+  // Tracking: Video Progress (25%, 50%, 75%) con nombre específico
   const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
     if (!video) return
     const v = e.currentTarget
@@ -772,22 +772,20 @@ const VideoModal = ({
     const milestones = [25, 50, 75]
     milestones.forEach(m => {
       if (percent >= m && !progressMilestonesRef.current.has(m)) {
-        track('Video Progress', { 
-          videoId: video.id, 
-          title: video.title, 
-          percentage: m 
+        track(`[Progress ${m}%] ${video.title}`, { 
+          id: video.id
         })
         progressMilestonesRef.current.add(m)
       }
     })
   }
 
-  // Tracking: Video Complete
+  // Tracking: Video Complete con nombre específico
   const handleVideoEnd = () => {
     if (video) {
-      track('Video Complete', { 
-        videoId: video.id, 
-        title: video.title 
+      track(`[Complete] ${video.title}`, { 
+        id: video.id,
+        duration: video.duration
       })
     }
     setShowEndCTA(true)
