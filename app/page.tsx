@@ -6,32 +6,52 @@ import {
   AnimatePresence, 
   useScroll, 
   useTransform, 
-  useMotionValue, 
-  useMotionTemplate,
   useInView
 } from 'framer-motion'
 import { 
   Play, 
   X, 
   ChevronRight, 
-  ChevronLeft,
   ExternalLink,
-  Shuffle,
   CheckCircle2,
   Menu,
   Film,
-  Target,
-  Zap,
+  Phone,
+  BookOpen,
   ArrowRight
 } from 'lucide-react'
 
-// MOCK ANALYTICS (Replaces external dependency to fix build error)
-const track = (name: string, properties?: any) => {
-  console.log(`[Analytics] ${name}`, properties)
+// ============================================================================
+// CONFIGURACIÓN DE ANALÍTICA (GA4)
+// ============================================================================
+
+const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+
+const initGA4 = () => {
+  if (typeof window !== 'undefined') {
+    const script = document.createElement('script');
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
+    script.async = true;
+    document.head.appendChild(script);
+
+    window.dataLayer = window.dataLayer || [];
+    function gtag(...args: any[]) {
+      window.dataLayer.push(args);
+    }
+    gtag('js', new Date());
+    gtag('config', GA_MEASUREMENT_ID);
+  }
+};
+
+const track = (eventName: string, parameters?: any) => {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, parameters);
+  }
+  console.log(`[GA4 Event] ${eventName}`, parameters);
 }
 
 // ============================================================================
-// CONFIGURACIÓN & DATOS
+// DATOS
 // ============================================================================
 
 interface VideoItem {
@@ -47,55 +67,55 @@ interface VideoItem {
 const videosData: VideoItem[] = [
   {
     id: 'v1',
-    title: 'Preview VAWA',
+    title: 'Visa para víctimas de abuso',
     category: 'Visa',
     duration: '3:24',
-    description: 'Guía completa sobre el proceso de solicitud VAWA y requisitos legales necesarios.',
+    description: 'Una mirada profunda a cómo la ley protege a quienes han sufrido en silencio. Descubre los pasos hacia la libertad y la seguridad legal.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/Preview%20VAWA.mp4',
     thumbnail: '/images/thumbnail-1.png'
   },
   {
     id: 'v2',
-    title: 'Preview Visa U - Parte 2',
+    title: 'El camino de la Visa U',
     category: 'Visa',
     duration: '4:15',
-    description: 'Segunda parte del proceso de visa U, requisitos y documentación requerida.',
+    description: 'Cómo transformar una situación difícil en una oportunidad legal.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/PREVIEW%20VISA%20U2.mp4',
     thumbnail: '/images/thumbnail-2.png'
   },
   {
     id: 'v3',
-    title: 'Preview Visa U - Parte 1',
+    title: 'Testimonio Visa U - Inicio',
     category: 'Visa',
     duration: '3:45',
-    description: 'Primera parte del proceso de visa U para víctimas de crímenes.',
+    description: 'El primer paso para recuperar la tranquilidad.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/PREVIEW%20VISA%20U1.mp4',
     thumbnail: '/images/thumbnail-3.png'
   },
   {
     id: 'v4',
-    title: 'Visa T - Versión 2',
+    title: 'Visa T - Una nueva vida',
     category: 'Visa',
     duration: '5:20',
-    description: 'Versión actualizada del proceso de visa T para víctimas de tráfico humano.',
+    description: 'Relato sobre la libertad y la protección legal.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%202.mp4',
     thumbnail: '/images/thumbnail-4.png'
   },
   {
     id: 'v5',
-    title: 'Visa T - Versión 1',
+    title: 'Entendiendo la Visa T',
     category: 'Visa',
     duration: '4:50',
-    description: 'Primera versión del proceso de visa T y requisitos legales.',
+    description: 'Información vital para identificar si calificas.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%2001.mp4',
     thumbnail: '/images/thumbnail-5.png'
   },
   {
     id: 'v6',
-    title: 'Preview Visa SIJS',
+    title: 'Esperanza Juvenil (SIJS)',
     category: 'Visa',
     duration: '6:10',
-    description: 'Guía completa sobre el Estatus Especial de Inmigrante Juvenil (SIJS).',
+    description: 'Protección para menores que buscan un futuro seguro.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/Preview%20VISA%20SIJS.mp4',
     thumbnail: '/images/thumbnail-6.png'
   }
@@ -134,7 +154,7 @@ function getSessionSeed(): number {
 
 const NoiseOverlay = () => (
   <div 
-    className="fixed inset-0 pointer-events-none z-[100] opacity-[0.025] mix-blend-overlay"
+    className="fixed inset-0 pointer-events-none z-[100] opacity-[0.035] mix-blend-overlay"
     style={{
       backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
     }}
@@ -142,7 +162,7 @@ const NoiseOverlay = () => (
 )
 
 const FloatingParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+  <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
     {[...Array(20)].map((_, i) => (
       <motion.div
         key={i}
@@ -165,6 +185,22 @@ const FloatingParticles = () => (
       />
     ))}
   </div>
+)
+
+const GreenCallButton = ({ className = "", showText = true }: { className?: string, showText?: boolean }) => (
+  <motion.a
+    href="tel:+18883707022" 
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+    onClick={() => track('click_call_button')}
+    className={`flex items-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] transition-all z-40 cursor-pointer ${className}`}
+  >
+    {/* Icono más pequeño: w-10 h-10 en contenedor y w-5 h-5 en icono */}
+    <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20">
+      <Phone className="w-5 h-5 fill-current" />
+    </div>
+    {showText && <span className="pr-5 text-xs uppercase tracking-widest">Llámanos ahora</span>}
+  </motion.a>
 )
 
 const ShinyButton = ({ 
@@ -199,7 +235,7 @@ const ShinyButton = ({
       whileHover={{ scale: 1.03, boxShadow: "0 0 40px rgba(212,175,55,0.4)" }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`group relative px-10 py-5 bg-gradient-to-r from-[#CFB53B] via-[#E6D98D] to-[#CFB53B] text-[#0B1120] font-bold uppercase tracking-[0.15em] text-xs rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(212,175,55,0.3)] ${className}`}
+      className={`group relative px-8 py-4 bg-gradient-to-r from-[#CFB53B] via-[#E6D98D] to-[#CFB53B] text-[#011c45] font-bold uppercase tracking-[0.15em] text-xs rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(212,175,55,0.3)] cursor-pointer z-40 ${className}`}
     >
       <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
       <div className="absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white to-transparent skew-x-[-25deg] group-hover:left-[200%] transition-all duration-1000 opacity-40" />
@@ -223,7 +259,7 @@ const Header = () => {
     return scrollY.on("change", (latest) => setIsScrolled(latest > 50))
   }, [scrollY])
 
-  const navItems = ['Inicio', 'Videos']
+  const navItems = ['Inicio', 'Historias', 'Testimonios']
 
   return (
     <>
@@ -233,12 +269,13 @@ const Header = () => {
         transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ${
           isScrolled 
-            ? 'bg-[#0B1120]/70 backdrop-blur-2xl border-b border-white/5' 
+            ? 'bg-[#011c45]/90 backdrop-blur-2xl border-b border-white/5 shadow-lg' 
             : 'bg-transparent border-b border-transparent'
         }`}
       >
         <div className="container mx-auto px-6 lg:px-12">
-          <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? 'py-4' : 'py-6'}`}>
+          {/* Header más delgado: py-1 en scroll, py-2 normal */}
+          <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? 'py-1' : 'py-2'}`}>
             <motion.a
               href="https://manuelsolis.com"
               target="_blank"
@@ -246,17 +283,16 @@ const Header = () => {
               className="flex items-center gap-4 group"
               whileHover={{ scale: 1.02 }}
             >
-              <div className="relative w-12 h-12">
+              {/* LOGO GRANDE mantenido, pero el contenedor ajustado para no estirar el header innecesariamente */}
+              <div className="relative w-16 h-16 md:w-24 md:h-24">
                 <img 
                   src="/images/manuelsolis.png" 
                   alt="Manuel Solis Logo" 
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain filter brightness-110 drop-shadow-md"
                 />
-                <div className="absolute -inset-1 bg-[#D4AF37]/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-              <div className="hidden sm:block">
-                <h1 className="text-white text-sm font-bold tracking-[0.2em] uppercase">Manuel Solis</h1>
-                <p className="text-[#D4AF37]/80 text-[10px] uppercase tracking-[0.3em]">Training Center • SLP</p>
+              <div className="hidden sm:block pt-1">
+                <p className="text-[#D4AF37] text-xs uppercase tracking-[0.3em] font-bold">Arregla sin salir</p>
               </div>
             </motion.a>
 
@@ -265,7 +301,7 @@ const Header = () => {
                 <motion.a
                   key={item}
                   href={`#${item.toLowerCase()}`}
-                  className="relative text-white/50 hover:text-white text-[11px] uppercase tracking-[0.25em] font-medium transition-colors duration-300 py-2"
+                  className="relative text-white/70 hover:text-white text-[11px] uppercase tracking-[0.25em] font-medium transition-colors duration-300 py-2"
                   whileHover={{ y: -2 }}
                 >
                   {item}
@@ -309,7 +345,7 @@ const Header = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 left-0 right-0 z-40 bg-[#0B1120]/95 backdrop-blur-2xl border-b border-white/5 lg:hidden"
+            className="fixed top-20 left-0 right-0 z-40 bg-[#011c45]/95 backdrop-blur-2xl border-b border-white/5 lg:hidden shadow-2xl"
           >
             <nav className="container mx-auto px-6 py-8 flex flex-col gap-6">
               {navItems.map((item) => (
@@ -335,63 +371,47 @@ const Header = () => {
 // ============================================================================
 const HeroInstructions = () => {
   const steps = [
-    { icon: Target, number: "01", text: "Elige cualquier video" },
-    { icon: Play, number: "02", text: "Observa y aprende" },
-    { icon: Zap, number: "03", text: "Aplica al instante" }
+    { icon: Play, number: "01", text: "Reproduce" },
+    { icon: BookOpen, number: "02", text: "Aprende" },
+    { icon: Phone, number: "03", text: "Llámanos" }
   ]
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 1, delay: 1 }}
-      className="w-full max-w-5xl mx-auto"
+      transition={{ duration: 0.8, delay: 0.8 }}
+      className="w-full max-w-2xl mx-auto mt-16"
     >
-      <div className="hidden md:grid md:grid-cols-3 gap-6 lg:gap-8">
+      {/* Versión Desktop: Minimalista y Horizontal */}
+      <div className="hidden md:flex justify-center gap-12">
         {steps.map((step, i) => (
           <motion.div
             key={i}
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1 + i * 0.15 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-            className="group relative"
+            whileHover={{ y: -3 }}
+            className="flex items-center gap-3 group cursor-default"
           >
-            <div className="relative p-8 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10 hover:border-[#D4AF37]/30 transition-all duration-500">
-              <div className="absolute top-4 right-4 text-6xl font-black text-white/[0.03] leading-none">
-                {step.number}
-              </div>
-              <div className="relative w-14 h-14 rounded-xl bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 flex items-center justify-center mb-6 group-hover:scale-110 group-hover:from-[#D4AF37]/40 group-hover:to-[#D4AF37]/20 transition-all duration-500">
-                <step.icon className="w-7 h-7 text-[#D4AF37]" />
-                <div className="absolute inset-0 rounded-xl bg-[#D4AF37]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              </div>
-              <h3 className="text-white text-lg font-bold relative z-10 group-hover:text-[#D4AF37] transition-colors duration-300">
-                {step.text}
-              </h3>
+            <div className="relative w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:border-[#D4AF37]/50 transition-colors">
+              <step.icon className="w-5 h-5 text-[#D4AF37]" />
+            </div>
+            <div className="text-left">
+              <span className="block text-[10px] text-white/40 font-bold tracking-widest">{step.number}</span>
+              <span className="block text-sm text-white font-medium tracking-wide uppercase group-hover:text-[#D4AF37] transition-colors">{step.text}</span>
             </div>
           </motion.div>
         ))}
       </div>
 
-      <div className="md:hidden flex flex-col gap-4">
+      {/* Versión Mobile: Compacta */}
+      <div className="md:hidden flex justify-between gap-2">
         {steps.map((step, i) => (
-          <motion.div
+          <div
             key={i}
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 1 + i * 0.1 }}
-            className="relative p-6 rounded-2xl bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-xl border border-white/10"
+            className="flex-1 flex flex-col items-center p-3 rounded-lg bg-white/5 border border-white/5"
           >
-            <div className="flex items-center gap-4">
-              <div className="text-3xl font-black text-[#D4AF37]/30">
-                {step.number}
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37]/30 to-[#D4AF37]/10 flex items-center justify-center shrink-0">
-                <step.icon className="w-6 h-6 text-[#D4AF37]" />
-              </div>
-              <h3 className="text-white text-base font-bold flex-1">{step.text}</h3>
-            </div>
-          </motion.div>
+            <step.icon className="w-4 h-4 text-[#D4AF37] mb-2" />
+            <span className="text-[9px] text-white/90 font-bold uppercase tracking-wide">{step.text}</span>
+          </div>
         ))}
       </div>
     </motion.div>
@@ -402,157 +422,196 @@ const Hero = () => {
   const { scrollY } = useScroll()
   const y1 = useTransform(scrollY, [0, 600], [0, 200])
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
-  const scale = useTransform(scrollY, [0, 400], [1, 0.95])
-
+  
   const scrollToVideos = () => {
-    document.getElementById('videos')?.scrollIntoView({ behavior: 'smooth' })
+    document.getElementById('historias')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
-    <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-[#0B1120]">
+    // Reducido a min-h-screen
+    <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#011c45]">
+      {/* Fondo y Efectos */}
+      <div className="absolute inset-0 bg-[#011c45] z-0">
+        <FloatingParticles />
         <motion.div
           animate={{ 
             scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
+            opacity: [0.2, 0.4, 0.2],
           }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-30%] right-[-20%] w-[1000px] h-[1000px] bg-blue-600/20 rounded-full blur-[150px]"
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-[-30%] right-[-20%] w-[1200px] h-[1200px] bg-[#004e9a]/20 rounded-full blur-[150px]"
         />
         <motion.div
           animate={{ 
             scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
+            opacity: [0.1, 0.3, 0.1],
           }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-[-30%] left-[-20%] w-[800px] h-[800px] bg-[#D4AF37]/10 rounded-full blur-[120px]"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(212,175,55,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(212,175,55,0.03)_1px,transparent_1px)] bg-[size:80px_80px] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]" />
-        <FloatingParticles />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_90%)]" />
       </div>
 
       <motion.div 
-        style={{ y: y1, opacity, scale }}
-        className="container mx-auto px-6 lg:px-12 relative z-10 text-center pt-24"
+        style={{ y: y1, opacity }}
+        // Subimos más el contenido: pt-20 en móvil, pt-28 en desktop
+        className="container mx-auto px-6 lg:px-12 relative z-10 text-center pt-20 md:pt-28"
       >
-        <motion.div
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-bold text-white mb-12 tracking-tight leading-[0.9]">
-            <span className="block">Excelencia en</span>
-            <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5C2] via-[#D4AF37] to-[#8B6914] animate-gradient-x">
-              Cada Llamada
-            </span>
-          </h1>
-        </motion.div>
-
-        <HeroInstructions />
-
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 1.2 }}
-          className="flex items-center justify-center mt-12"
+          transition={{ duration: 1, delay: 0.2 }}
         >
-          <ShinyButton icon={Film} onClick={scrollToVideos}>
-            Ver Catálogo de Videos
-          </ShinyButton>
+          <span className="inline-block py-2 px-4 rounded-full bg-white/5 border border-white/10 text-[#D4AF37] text-xs font-bold tracking-[0.2em] uppercase mb-6 backdrop-blur-md">
+            Experiencias Reales
+          </span>
+          <h1 className="text-5xl sm:text-6xl md:text-8xl font-bold text-white mb-8 tracking-tight leading-[1.05]">
+            <span className="block">Entender antes</span>
+            <span className="block mt-4 text-transparent bg-clip-text bg-gradient-to-r from-[#FFF5C2] via-[#D4AF37] to-[#8B6914] animate-gradient-x pb-4">
+              de Decidir
+            </span>
+          </h1>
+          <p className="text-white/60 text-lg md:text-2xl max-w-3xl mx-auto mb-10 font-light tracking-wide">
+            Aprender también puede cambiar tu historia.
+          </p>
+
+          <div className="max-w-4xl mx-auto mb-12 bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/5 shadow-2xl">
+            <p className="text-base md:text-lg leading-relaxed text-white/90 font-light">
+              Conozca situaciones reales que muchas personas han vivido y cómo, al informarse correctamente, encontraron un camino legal posible para su estatus migratorio. <span className="text-[#D4AF37] font-medium">Cada historia es una invitación a aprender</span>, reflexionar y entender que la información correcta puede marcar la diferencia.
+            </p>
+          </div>
         </motion.div>
+
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-8 mt-10 relative z-50">
+          <ShinyButton icon={Film} onClick={scrollToVideos}>
+            Ver historias
+          </ShinyButton>
+          
+          <GreenCallButton />
+        </div>
+
+        <HeroInstructions />
+
       </motion.div>
     </section>
   )
 }
 
 // ============================================================================
-// CAROUSEL CON IMAGEN SUPERPUESTA MEJORADA
+// VIDEO CAROUSEL (AUTOMATICO SIN CONTROLES, 8 SEGUNDOS)
 // ============================================================================
 const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => void }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+  const [direction, setDirection] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
+  // Asegurar que el índice no se salga de rango
+  const safeIndex = Math.abs(currentIndex % videosData.length)
+  const currentVideo = videosData[safeIndex]
+
+  // Auto-play effect
   useEffect(() => {
-    if (!isAutoPlaying) return
+    if (isPaused) return;
+
     const interval = setInterval(() => {
-      handleNext()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [isAutoPlaying, currentIndex])
+      setDirection(1)
+      setIsVideoLoaded(false)
+      setCurrentIndex((prev) => (prev + 1) % videosData.length)
+    }, 8000); // 8 segundos
 
-  const handlePrev = () => {
-    setIsAutoPlaying(false)
-    setIsVideoLoaded(false)
-    setCurrentIndex((prev) => (prev - 1 + videosData.length) % videosData.length)
-  }
+    return () => clearInterval(interval);
+  }, [isPaused]);
 
-  const handleNext = () => {
-    // Si es automático, no seteamos false para que siga el loop
-    setIsVideoLoaded(false)
-    setCurrentIndex((prev) => (prev + 1) % videosData.length)
-  }
-
-  const handleVideoClick = (videoId: string) => {
-    onVideoSelect(videoId)
+  const handleVideoClick = () => {
+    onVideoSelect(currentVideo.id)
   }
 
   const onVideoDataLoaded = () => {
-    // Pequeño delay artificial para asegurar que la imagen se vea un instante
-    // antes de que el video arranque, evitando el "flash" negro
+    // Intentar asegurar que el video esté visible una vez cargado
     setTimeout(() => {
       setIsVideoLoaded(true)
-    }, 500)
+    }, 200)
+  }
+
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 100 : -100,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 100 : -100,
+      opacity: 0
+    })
   }
 
   return (
-    <section className="relative py-20 overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0B1120] via-[#0a0f1a] to-[#0B1120]" />
-      
+    <section 
+      id="historias" 
+      className="relative py-32 overflow-hidden bg-gradient-to-b from-[#011c45] to-[#000d21]"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <div className="container mx-auto px-6 lg:px-12 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 1 }}
-          className="text-center mb-12"
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
         >
-          <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#D4AF37]/5 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] uppercase tracking-[0.3em] mb-6">
+          <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#D4AF37]/5 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] uppercase tracking-[0.3em] mb-4">
             <Film className="w-3 h-3" />
-            Videos Destacados
+            Historias Destacadas
           </span>
-          <h2 className="text-4xl md:text-5xl font-bold text-white">
-            Explora <span className="text-[#D4AF37]">Nuestro Contenido</span>
+          <h2 className="text-3xl md:text-5xl font-bold text-white">
+             Casos de <span className="text-[#D4AF37]">Éxito</span>
           </h2>
         </motion.div>
 
-        <div className="relative max-w-5xl mx-auto">
-          <div className="relative aspect-video rounded-3xl overflow-hidden bg-[#111827] shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-            <AnimatePresence mode="wait">
+        <motion.div 
+          className="relative max-w-5xl mx-auto"
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          {/* Contenedor del Video/Imagen (Aspect Ratio) */}
+          <div className="relative aspect-[16/9] md:aspect-video rounded-3xl overflow-hidden bg-black shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 group">
+            
+            <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={currentIndex}
-                initial={{ opacity: 0, x: 100 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{ duration: 0.5 }}
-                className="absolute inset-0 cursor-pointer group"
-                onClick={() => handleVideoClick(videosData[currentIndex].id)}
+                custom={direction}
+                variants={variants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{
+                  x: { type: "spring", stiffness: 300, damping: 30 },
+                  opacity: { duration: 0.4 }
+                }}
+                className="absolute inset-0 cursor-pointer"
+                onClick={handleVideoClick}
               >
-                {/* 1. IMAGEN DE FONDO (Visible mientras carga el video) */}
+                {/* Imagen de Fondo */}
                 <img
-                    src={videosData[currentIndex].thumbnail}
-                    alt={videosData[currentIndex].title}
-                    className="absolute inset-0 w-full h-full object-cover z-20"
-                    style={{ 
-                        opacity: isVideoLoaded ? 0 : 1,
-                        transition: 'opacity 0.8s ease-in-out'
-                    }}
+                  src={currentVideo.thumbnail}
+                  alt={currentVideo.title}
+                  className="absolute inset-0 w-full h-full object-cover z-10"
+                  style={{ opacity: isVideoLoaded ? 0 : 1 }}
                 />
 
-                {/* 2. VIDEO (Se carga detrás) */}
+                {/* Video de Fondo */}
                 <video
-                  src={videosData[currentIndex].videoUrl}
-                  className="w-full h-full object-cover z-10"
+                  src={currentVideo.videoUrl}
+                  className="absolute inset-0 w-full h-full object-cover z-0"
                   muted
                   loop
                   autoPlay
@@ -560,79 +619,46 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                   onLoadedData={onVideoDataLoaded}
                 />
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1120] via-transparent to-transparent z-30 pointer-events-none" />
+                {/* SIN BOTÓN DE PLAY GIGANTE */}
+                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-20" />
                 
-                <div className="absolute bottom-0 left-0 right-0 p-8 z-40">
-                  <span className="inline-block px-4 py-1.5 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#D4AF37]/20 text-[#D4AF37] backdrop-blur-xl border border-[#D4AF37]/20 mb-4">
-                    {videosData[currentIndex].category}
-                  </span>
-                  <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                    {videosData[currentIndex].title}
-                  </h3>
-                  <p className="text-white/60 text-sm md:text-base max-w-2xl">
-                    {videosData[currentIndex].description}
-                  </p>
-                </div>
-
-                {/* Play Icon Overlay */}
-                <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="w-20 h-20 rounded-full bg-[#D4AF37]/90 flex items-center justify-center backdrop-blur-sm transform scale-90 group-hover:scale-100 transition-transform duration-300">
-                        <Play className="w-8 h-8 text-[#0B1120] ml-1" fill="currentColor" />
-                    </div>
-                </div>
-
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-between mt-6">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={handlePrev}
-              className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white transition-all"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </motion.button>
-
-            <div className="flex items-center gap-2">
-              {videosData.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    setCurrentIndex(idx)
-                    setIsAutoPlaying(false)
-                    setIsVideoLoaded(false)
-                  }}
-                  className={`transition-all duration-300 ${
-                    idx === currentIndex
-                      ? 'w-8 h-2 bg-[#D4AF37] rounded-full'
-                      : 'w-2 h-2 bg-white/20 rounded-full hover:bg-white/40'
-                  }`}
-                />
-              ))}
+          {/* DESCRIPCIÓN FUERA DEL VIDEO (ABAJO) */}
+          <div className="mt-8 px-4 md:px-0 text-center md:text-left flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
+            <div className="flex-1">
+              <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-4">
+                 <span className="px-3 py-1 rounded bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-bold uppercase tracking-wider border border-[#D4AF37]/20">
+                    {currentVideo.category}
+                 </span>
+                 <span className="px-3 py-1 rounded bg-white/5 text-white/50 text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                    {currentVideo.duration}
+                 </span>
+              </div>
+              
+              <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
+                {currentVideo.title}
+              </h3>
+              
+              <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-2xl mx-auto md:mx-0 font-light">
+                {currentVideo.description}
+              </p>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                  handleNext()
-                  setIsAutoPlaying(false)
-              }}
-              className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 backdrop-blur-xl border border-white/10 flex items-center justify-center text-white transition-all"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </motion.button>
+            <div className="flex-shrink-0">
+               <GreenCallButton showText={true} className="px-8 py-4 text-xs" />
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   )
 }
 
 // ============================================================================
-// VIDEO CARD OPTIMIZADO (Imagen Primero, Video en Hover)
+// VIDEO CARD & LIST
 // ============================================================================
 const VideoCard = ({ 
   video, 
@@ -645,495 +671,219 @@ const VideoCard = ({
   onPlay: () => void
   isActive?: boolean
 }) => {
-  const mouseX = useMotionValue(0)
-  const mouseY = useMotionValue(0)
   const [isHovered, setIsHovered] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect()
-    mouseX.set(e.clientX - rect.left)
-    mouseY.set(e.clientY - rect.top)
-  }
-
-  // Reproducir video solo en Hover para ahorrar recursos
   useEffect(() => {
     if (isHovered && videoRef.current) {
         const playPromise = videoRef.current.play()
-        if (playPromise !== undefined) {
-            playPromise.catch(() => {
-                // Auto-play was prevented
-            })
-        }
+        if (playPromise !== undefined) playPromise.catch(() => {})
     } else if (!isHovered && videoRef.current) {
         videoRef.current.pause()
         videoRef.current.currentTime = 0
     }
   }, [isHovered])
 
-  const handleClick = () => {
-    track(`[Select] ${video.title}`, { 
-      id: video.id,
-      category: video.category
-    })
-    onPlay()
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.7, delay: index * 0.1 }}
-      onMouseMove={handleMouseMove}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={handleClick}
-      className={`group relative rounded-3xl overflow-hidden cursor-pointer bg-[#111827] transition-all duration-700 ${
+      onClick={onPlay}
+      className={`group relative rounded-2xl overflow-hidden cursor-pointer bg-[#001c40] border border-white/5 transition-all duration-500 hover:shadow-2xl hover:shadow-[#011c45]/50 ${
         isActive ? 'ring-2 ring-[#D4AF37]' : ''
       }`}
     >
-      <motion.div
-        className="pointer-events-none absolute -inset-px rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30"
-        style={{
-          background: useMotionTemplate`
-            radial-gradient(
-              400px circle at ${mouseX}px ${mouseY}px,
-              rgba(212, 175, 55, 0.15),
-              transparent 80%
-            )
-          `,
-        }}
-      />
-
-      <div className="relative aspect-[16/10] overflow-hidden bg-black">
-        {/* 1. IMAGEN DE PORTADA (Siempre visible por defecto) */}
+      <div className="relative aspect-video overflow-hidden bg-black">
         <img 
             src={video.thumbnail} 
             alt={video.title}
             loading="lazy"
-            className="absolute inset-0 w-full h-full object-cover z-10"
+            className="absolute inset-0 w-full h-full object-cover z-10 transition-transform duration-700 group-hover:scale-105"
         />
-
-        {/* 2. VIDEO (Solo visible en Hover) - preload="none" para optimizar carga */}
         <video
           ref={videoRef}
           src={video.videoUrl}
           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-20 ${
               isHovered ? 'opacity-100' : 'opacity-0'
           }`}
-          muted
-          loop
-          playsInline
-          preload="none" 
+          muted loop playsInline preload="none" 
         />
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent z-20 transition-colors" />
         
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-[#111827]/50 to-transparent z-20 pointer-events-none" />
-        
-        <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: isHovered ? 1 : 0.8, opacity: isHovered ? 1 : 0 }}
-            className="w-20 h-20 rounded-full bg-[#D4AF37] flex items-center justify-center shadow-[0_0_60px_rgba(212,175,55,0.5)]"
-          >
-            <Play className="w-8 h-8 text-[#0B1120] ml-1" fill="#0B1120" />
-          </motion.div>
+        {/* Play Button Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center z-30 opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
+          <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
+            <Play className="w-8 h-8 text-white fill-white" />
+          </div>
         </div>
 
-        <div className="absolute top-5 right-5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10 z-30">
-          <span className="text-white text-[11px] font-mono font-medium">{video.duration}</span>
-        </div>
-
-        <div className="absolute top-5 left-5 z-30">
-          <span className="px-3 py-1.5 rounded-full text-[10px] uppercase tracking-[0.15em] font-bold bg-[#D4AF37]/20 text-[#D4AF37] backdrop-blur-xl border border-[#D4AF37]/20">
-            {video.category}
-          </span>
+        <div className="absolute bottom-4 right-4 px-2 py-1 rounded bg-black/60 backdrop-blur text-white text-[10px] font-mono z-30">
+          {video.duration}
         </div>
       </div>
 
-      <div className="p-8 relative z-30 bg-[#111827]">
-        <h3 className="text-xl font-bold text-white mb-3 group-hover:text-[#D4AF37] transition-colors duration-300 line-clamp-1">
+      <div className="p-6 relative z-30">
+        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#D4AF37] transition-colors line-clamp-1">
           {video.title}
         </h3>
-        
-        <p className="text-white/40 text-sm leading-relaxed mb-6 line-clamp-2">
+        <p className="text-white/50 text-sm leading-relaxed mb-4 line-clamp-2">
           {video.description}
         </p>
-
-        <div className="flex items-center text-[#D4AF37]/70 text-xs uppercase tracking-[0.2em] font-medium group-hover:text-[#D4AF37] transition-colors">
-          <span>Reproducir</span>
-          <motion.div
-            className="ml-2"
-            animate={{ x: [0, 5, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-          >
-            <ArrowRight className="w-4 h-4" />
-          </motion.div>
+        <div className="flex items-center text-[#D4AF37] text-xs font-bold uppercase tracking-wider">
+          <span>Ver Historia</span>
+          <ArrowRight className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>
-
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#D4AF37]/0 to-transparent group-hover:via-[#D4AF37]/50 transition-all duration-700 z-30" />
     </motion.div>
   )
 }
 
 // ============================================================================
-// VIDEO MODAL (Sin Cambios Mayores, solo limpieza)
+// VIDEO MODAL
 // ============================================================================
 const VideoModal = ({
   isOpen,
   video,
   onClose,
   onNext,
-  onRandom,
-  currentIndex,
-  total
 }: {
   isOpen: boolean
   video: VideoItem | null
   onClose: () => void
   onNext: () => void
-  onRandom: () => void
-  currentIndex: number
-  total: number
 }) => {
   const [showEndCTA, setShowEndCTA] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
-  
-  const hasStartedRef = useRef(false)
-  const progressMilestonesRef = useRef<Set<number>>(new Set())
 
   useEffect(() => {
     setShowEndCTA(false)
-    hasStartedRef.current = false
-    progressMilestonesRef.current.clear()
   }, [video?.id])
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleEscape)
-      document.body.style.overflow = 'hidden'
-    }
-    return () => {
-      document.removeEventListener('keydown', handleEscape)
-      document.body.style.overflow = ''
-    }
-  }, [isOpen, onClose])
-
-  const handlePlay = () => {
-    if (!hasStartedRef.current && video) {
-      track(`[Start] ${video.title}`, { 
-        id: video.id,
-        category: video.category
-      })
-      hasStartedRef.current = true
-    }
-  }
-
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    if (!video) return
-    const v = e.currentTarget
-    const percent = (v.currentTime / v.duration) * 100
-    
-    const milestones = Array.from({ length: 20 }, (_, i) => (i + 1) * 5)
-    
-    milestones.forEach(m => {
-      if (percent >= m && !progressMilestonesRef.current.has(m)) {
-        track(`[Progress ${m}%] ${video.title}`, { 
-          id: video.id
-        })
-        progressMilestonesRef.current.add(m)
-      }
-    })
-  }
-
-  const handleVideoEnd = () => {
-    if (video) {
-      track(`[Complete] ${video.title}`, { 
-        id: video.id,
-        duration: video.duration
-      })
-    }
-    setShowEndCTA(true)
-  }
-
-  const handleNext = () => {
-    setShowEndCTA(false)
-    onNext()
-  }
-
-  const handleRandom = () => {
-    setShowEndCTA(false)
-    onRandom()
-  }
-
-  if (!video) return null
+  if (!isOpen || !video) return null
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-[#011c45]/95 backdrop-blur-xl"
+        onClick={onClose}
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-8"
-          onClick={onClose}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="relative w-full max-w-6xl bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex flex-col"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div className="absolute inset-0 bg-[#0B1120]/98 backdrop-blur-2xl" />
+          <div className="flex items-center justify-between p-4 border-b border-white/10 bg-[#001533]">
+            <h3 className="text-white font-medium ml-2">{video.title}</h3>
+            <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full text-white transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
 
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0, y: 50 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 50 }}
-            transition={{ type: "spring", duration: 0.7 }}
-            className="relative w-full max-w-6xl bg-[#111827] rounded-3xl overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={onClose}
-              className="absolute top-6 right-6 z-30 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors backdrop-blur-xl"
-            >
-              <X className="w-5 h-5 text-white" />
-            </motion.button>
-
-            <div className="relative aspect-video bg-black">
-              <video
-                ref={videoRef}
-                src={video.videoUrl}
-                className="w-full h-full object-contain"
-                controls
-                autoPlay
-                onPlay={handlePlay}
-                onTimeUpdate={handleTimeUpdate}
-                onEnded={handleVideoEnd}
-              />
-
-              <AnimatePresence>
-                {showEndCTA && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-[#0B1120]/95 backdrop-blur-xl flex items-center justify-center"
+          <div className="relative aspect-video bg-black group">
+            <video
+              ref={videoRef}
+              src={video.videoUrl}
+              className="w-full h-full"
+              controls
+              autoPlay
+              onEnded={() => setShowEndCTA(true)}
+            />
+            {showEndCTA && (
+              <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-8 z-50">
+                <CheckCircle2 className="w-16 h-16 text-[#D4AF37] mb-6" />
+                <h3 className="text-2xl text-white font-bold mb-2">Historia Completada</h3>
+                <p className="text-white/60 mb-8">La información es el primer paso.</p>
+                <div className="flex gap-4">
+                  <GreenCallButton showText={true} className="px-6" />
+                  <button 
+                    onClick={onNext}
+                    className="px-6 py-3 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
                   >
-                    <motion.div
-                      initial={{ scale: 0.8, y: 30 }}
-                      animate={{ scale: 1, y: 0 }}
-                      className="text-center px-8"
-                    >
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{ type: "spring", delay: 0.2 }}
-                        className="w-24 h-24 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#8B6914] flex items-center justify-center mx-auto mb-8 shadow-[0_0_60px_rgba(212,175,55,0.4)]"
-                      >
-                        <CheckCircle2 className="w-12 h-12 text-[#0B1120]" />
-                      </motion.div>
-                      
-                      <h3 className="text-3xl font-bold text-white mb-3">¡Video completado!</h3>
-                      <p className="text-white/50 mb-10 text-lg">¿Qué te gustaría hacer ahora?</p>
-                      
-                      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <ShinyButton onClick={handleNext} icon={ChevronRight}>
-                          Siguiente Video
-                        </ShinyButton>
-                        <ShinyButton variant="ghost" onClick={handleRandom} icon={Shuffle}>
-                          Video Aleatorio
-                        </ShinyButton>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <div className="p-8 bg-gradient-to-r from-[#111827] to-[#0B1120] flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <span className="px-3 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold bg-[#D4AF37]/10 text-[#D4AF37]">
-                    {video.category}
-                  </span>
-                  <span className="text-white/30 text-sm">
-                    {currentIndex + 1} de {total}
-                  </span>
+                    Ver siguiente historia
+                  </button>
                 </div>
-                <h2 className="text-2xl font-bold text-white">{video.title}</h2>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleRandom}
-                  className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition-all flex items-center gap-2 text-sm"
-                >
-                  <Shuffle className="w-4 h-4" />
-                  Aleatorio
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleNext}
-                  className="px-5 py-3 rounded-xl bg-[#D4AF37] hover:bg-[#E6C84D] text-[#0B1120] font-bold transition-all flex items-center gap-2 text-sm"
-                >
-                  Siguiente
-                  <ChevronRight className="w-4 h-4" />
-                </motion.button>
-              </div>
-            </div>
-          </motion.div>
+            )}
+          </div>
         </motion.div>
-      )}
+      </motion.div>
     </AnimatePresence>
   )
 }
 
 // ============================================================================
-// VIDEO GALLERY
+// GALLERY SECTION
 // ============================================================================
 const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
   const [seed, setSeed] = useState<number | null>(null)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [filter, setFilter] = useState('Todos')
-  const containerRef = useRef(null)
-  const isInView = useInView(containerRef, { once: true, margin: "-50px" })
+  
+  useEffect(() => { setSeed(getSessionSeed()) }, [])
 
-  useEffect(() => {
-    setSeed(getSessionSeed())
-  }, [])
-
-  const shuffledVideos = useMemo(() => {
-    if (seed === null) return videosData
-    return seededShuffle(videosData, seed)
+  const displayVideos = useMemo(() => {
+    return seed === null ? videosData : seededShuffle(videosData, seed)
   }, [seed])
 
-  const categories = ['Todos', ...new Set(videosData.map(v => v.category))]
-  
-  const filteredVideos = filter === 'Todos' 
-    ? shuffledVideos 
-    : shuffledVideos.filter(v => v.category === filter)
-
   useEffect(() => {
-    if (initialVideoId && filteredVideos.length > 0) {
-      const index = filteredVideos.findIndex(v => v.id === initialVideoId)
-      if (index !== -1) {
-        setSelectedIndex(index)
-      }
+    if (initialVideoId) {
+      const index = displayVideos.findIndex(v => v.id === initialVideoId)
+      if (index !== -1) setSelectedIndex(index)
     }
-  }, [initialVideoId, filteredVideos])
-
-  const handleReRandomize = () => {
-    const newSeed = Date.now()
-    sessionStorage.setItem('dramatizaciones-seed', newSeed.toString())
-    setSeed(newSeed)
-  }
-
-  const handleNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((selectedIndex + 1) % filteredVideos.length)
-    }
-  }
-
-  const handleRandom = () => {
-    if (selectedIndex !== null) {
-      let newIndex = Math.floor(Math.random() * filteredVideos.length)
-      while (newIndex === selectedIndex && filteredVideos.length > 1) {
-        newIndex = Math.floor(Math.random() * filteredVideos.length)
-      }
-      setSelectedIndex(newIndex)
-    }
-  }
+  }, [initialVideoId, displayVideos])
 
   return (
-    <section id="videos" className="relative py-32 overflow-hidden">
-      <div className="absolute inset-0 bg-[#0B1120]" />
-      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#0a0f1a] to-transparent" />
-      <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-[#060a12] to-transparent" />
-      
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#D4AF37]/5 rounded-full blur-[200px] pointer-events-none" />
-
-      <div ref={containerRef} className="container mx-auto px-6 lg:px-12 relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 1 }}
-          className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-16"
+    <section id="videos" className="relative py-32 bg-[#000d21]">
+      <div className="container mx-auto px-6 lg:px-12 relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 border-b border-white/10 pb-8"
         >
           <div>
-            <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#D4AF37]/5 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] uppercase tracking-[0.3em] mb-6">
-              <Film className="w-3 h-3" />
-              Catálogo Completo
-            </span>
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
-              Dramatizaciones <span className="text-[#D4AF37]">Premium</span>
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              Historias de Éxito
             </h2>
-            <p className="text-white/40 text-lg max-w-xl">
-              {filteredVideos.length} videos disponibles — sin favoritos ni destacados
+            <p className="text-white/50 text-lg">
+              Conoce cómo otros arreglaron su situación
             </p>
           </div>
-
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex flex-wrap gap-2">
-              {categories.map(cat => (
-                <motion.button
-                  key={cat}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setFilter(cat)}
-                  className={`px-5 py-2.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] transition-all duration-300 ${
-                    filter === cat
-                      ? 'bg-[#D4AF37] text-[#0B1120] shadow-[0_0_20px_rgba(212,175,55,0.3)]'
-                      : 'bg-white/5 text-white/50 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {cat}
-                </motion.button>
-              ))}
-            </div>
-
-            <motion.button
-              whileHover={{ scale: 1.05, rotate: 180 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleReRandomize}
-              className="w-12 h-12 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all"
-              title="Re-ordenar aleatoriamente"
-            >
-              <Shuffle className="w-5 h-5" />
-            </motion.button>
+          <div className="flex items-center gap-4">
+             <GreenCallButton showText={false} className="w-12 h-12 !p-0" />
+             <div className="text-right hidden md:block">
+               <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">¿Tienes dudas?</p>
+               <p className="text-white text-sm">Nuestros expertos están listos</p>
+             </div>
           </div>
         </motion.div>
 
-        <motion.div 
-          layout
-          className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10"
-        >
-          <AnimatePresence mode="popLayout">
-            {filteredVideos.map((video, index) => (
-              <VideoCard
-                key={video.id}
-                video={video}
-                index={index}
-                onPlay={() => setSelectedIndex(index)}
-                isActive={selectedIndex === index}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {displayVideos.map((video, index) => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              index={index}
+              onPlay={() => setSelectedIndex(index)}
+              isActive={selectedIndex === index}
+            />
+          ))}
+        </div>
       </div>
 
       <VideoModal
         isOpen={selectedIndex !== null}
-        video={selectedIndex !== null ? filteredVideos[selectedIndex] : null}
+        video={selectedIndex !== null ? displayVideos[selectedIndex] : null}
         onClose={() => setSelectedIndex(null)}
-        onNext={handleNext}
-        onRandom={handleRandom}
-        currentIndex={selectedIndex ?? 0}
-        total={filteredVideos.length}
+        onNext={() => setSelectedIndex((prev) => (prev !== null ? (prev + 1) % displayVideos.length : 0))}
       />
     </section>
   )
@@ -1143,47 +893,40 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
 // FOOTER
 // ============================================================================
 const Footer = () => (
-  <footer className="relative py-16 overflow-hidden">
-    <div className="absolute inset-0 bg-[#020617]" />
-    <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
-    <div className="container mx-auto px-6 lg:px-12 relative z-10">
-      <div className="flex flex-col items-center text-center">
-        <div className="flex items-center gap-3 mb-8 opacity-60">
-          <div className="w-12 h-12">
-            <img 
-              src="/images/manuelsolis.png" 
-              alt="Manuel Solis Logo" 
-              className="w-full h-full object-contain"
-            />
+  <footer className="relative py-16 bg-[#000814] border-t border-white/5">
+    <div className="container mx-auto px-6 lg:px-12 text-center">
+      <div className="flex flex-col items-center">
+        <div className="flex items-center gap-3 mb-6 opacity-80 hover:opacity-100 transition-opacity">
+          <img 
+            src="/images/manuelsolis.png" 
+            alt="Manuel Solis" 
+            className="h-10 w-auto"
+          />
+          <div className="text-left">
+            <span className="block text-white font-bold tracking-[0.2em] text-xs uppercase">Manuel Solis</span>
+            <span className="block text-[#D4AF37] text-[10px] tracking-[0.2em] uppercase">Arregla sin salir</span>
           </div>
-          <span className="text-white font-bold tracking-[0.2em] text-sm uppercase">Manuel Solis</span>
         </div>
 
-        <p className="text-white/30 text-xs max-w-md leading-relaxed mb-6">
-          © {new Date().getFullYear()} Material de capacitación confidencial.<br />
-          Desarrollado para uso interno — Oficina San Luis Potosí.<br />
-          Prohibida su distribución externa.
+        <p className="text-white/30 text-xs max-w-md leading-relaxed">
+          © {new Date().getFullYear()} Manuel Solis Law Firm.<br />
+          El contenido de este sitio es informativo y educativo. Las historias presentadas son dramatizaciones basadas en casos reales.
         </p>
-
-        <a
-          href="https://manuelsolis.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#D4AF37]/50 hover:text-[#D4AF37] text-[10px] uppercase tracking-[0.3em] transition-colors"
-        >
-          manuelsolis.com
-        </a>
       </div>
     </div>
   </footer>
 )
 
 // ============================================================================
-// MAIN APP
+// MAIN PAGE COMPONENT
 // ============================================================================
 export default function DramatizacionesPage() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | undefined>(undefined)
+
+  // Inicializar GA4
+  useEffect(() => {
+    initGA4();
+  }, []);
 
   const handleVideoSelect = (videoId: string) => {
     setSelectedVideoId(videoId)
@@ -1193,7 +936,7 @@ export default function DramatizacionesPage() {
   }
 
   return (
-    <main className="bg-[#0B1120] min-h-screen text-white selection:bg-[#D4AF37] selection:text-black antialiased">
+    <main className="bg-[#011c45] min-h-screen text-white selection:bg-[#D4AF37] selection:text-black antialiased">
       <NoiseOverlay />
       <Header />
       <Hero />
