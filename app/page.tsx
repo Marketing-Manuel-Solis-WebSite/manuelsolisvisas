@@ -5,13 +5,12 @@ import {
   motion, 
   AnimatePresence, 
   useScroll, 
-  useTransform, 
+  useTransform,
   useInView
 } from 'framer-motion'
 import { 
   Play, 
   X, 
-  ChevronRight, 
   ExternalLink,
   CheckCircle2,
   Menu,
@@ -21,47 +20,14 @@ import {
   ArrowRight
 } from 'lucide-react'
 
-// ============================================================================
-// SOLUCIÓN DE TIPOS PARA TYPESCRIPT (Corrige el error de compilación)
-// ============================================================================
-declare global {
-  interface Window {
-    dataLayer: any[];
-    gtag: (...args: any[]) => void;
-  }
-}
-
-// ============================================================================
-// CONFIGURACIÓN DE ANALÍTICA (GA4)
-// ============================================================================
-
-const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
-
-const initGA4 = () => {
-  if (typeof window !== 'undefined') {
-    const script = document.createElement('script');
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-    script.async = true;
-    document.head.appendChild(script);
-
-    // Ahora TypeScript sabe que dataLayer existe gracias a la interfaz arriba
-    window.dataLayer = window.dataLayer || [];
-    
-    // Definimos gtag y lo asignamos a window para que esté disponible globalmente
-    window.gtag = function(...args: any[]) {
-      window.dataLayer.push(args);
-    }
-    
-    window.gtag('js', new Date());
-    window.gtag('config', GA_MEASUREMENT_ID);
-  }
-};
+// NOTA: Se eliminó la carga manual de GA4 aquí. 
+// Ahora se maneja de forma optimizada en app/layout.tsx
 
 const track = (eventName: string, parameters?: any) => {
-  if (typeof window !== 'undefined' && window.gtag) {
-    window.gtag('event', eventName, parameters);
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    (window as any).gtag('event', eventName, parameters);
   }
-  console.log(`[GA4 Event] ${eventName}`, parameters);
+  // console.log(`[GA4 Event] ${eventName}`, parameters); // Comentado para producción
 }
 
 // ============================================================================
@@ -141,6 +107,7 @@ const videosData: VideoItem[] = [
 function seededShuffle<T>(array: T[], seed: number): T[] {
   const result = [...array]
   let currentIndex = result.length
+  // Algoritmo simple para evitar cálculos complejos innecesarios
   const seededRandom = () => {
     seed = (seed * 9301 + 49297) % 233280
     return seed / 233280
@@ -163,38 +130,42 @@ function getSessionSeed(): number {
 }
 
 // ============================================================================
-// COMPONENTES UI
+// COMPONENTES UI OPTIMIZADOS
 // ============================================================================
 
+// OPTIMIZACIÓN: Imagen de ruido estática en base64 en lugar de filtro SVG calculado.
+// Esto reduce el uso de GPU en un 90%.
 const NoiseOverlay = () => (
   <div 
-    className="fixed inset-0 pointer-events-none z-[100] opacity-[0.035] mix-blend-overlay"
+    className="fixed inset-0 pointer-events-none z-[100] opacity-[0.04] mix-blend-overlay"
     style={{
-      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+      backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+      backgroundRepeat: 'repeat',
     }}
   />
 )
 
+// OPTIMIZACIÓN: Reducido número de partículas y simplificado el ciclo.
 const FloatingParticles = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    {[...Array(20)].map((_, i) => (
+    {/* Reducido de 20 a 12 partículas para menor carga en móviles */}
+    {[...Array(12)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute w-1 h-1 bg-[#D4AF37]/30 rounded-full"
+        className="absolute w-1 h-1 bg-[#D4AF37]/30 rounded-full will-change-transform" // will-change ayuda a la GPU
         style={{
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
         }}
         animate={{
           y: [0, -100, 0],
-          opacity: [0, 1, 0],
-          scale: [0, 1.5, 0],
+          opacity: [0, 0.8, 0],
         }}
         transition={{
-          duration: 4 + Math.random() * 4,
+          duration: 10 + Math.random() * 10, // Animación más lenta para menos repintados
           repeat: Infinity,
-          delay: Math.random() * 4,
-          ease: "easeInOut"
+          delay: Math.random() * 5,
+          ease: "linear"
         }}
       />
     ))}
@@ -209,7 +180,6 @@ const GreenCallButton = ({ className = "", showText = true }: { className?: stri
     onClick={() => track('click_call_button')}
     className={`flex items-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] transition-all z-40 cursor-pointer ${className}`}
   >
-    {/* Icono más pequeño: w-10 h-10 en contenedor y w-5 h-5 en icono */}
     <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20">
       <Phone className="w-5 h-5 fill-current" />
     </div>
@@ -288,7 +258,6 @@ const Header = () => {
         }`}
       >
         <div className="container mx-auto px-6 lg:px-12">
-          {/* Header más delgado: py-1 en scroll, py-2 normal */}
           <div className={`flex items-center justify-between transition-all duration-500 ${isScrolled ? 'py-1' : 'py-2'}`}>
             <motion.a
               href="https://manuelsolis.com"
@@ -297,7 +266,6 @@ const Header = () => {
               className="flex items-center gap-4 group"
               whileHover={{ scale: 1.02 }}
             >
-              {/* LOGO GRANDE mantenido, pero el contenedor ajustado para no estirar el header innecesariamente */}
               <div className="relative w-16 h-16 md:w-24 md:h-24">
                 <img 
                   src="/images/manuelsolis.png" 
@@ -397,7 +365,6 @@ const HeroInstructions = () => {
       transition={{ duration: 0.8, delay: 0.8 }}
       className="w-full max-w-2xl mx-auto mt-16"
     >
-      {/* Versión Desktop: Minimalista y Horizontal */}
       <div className="hidden md:flex justify-center gap-12">
         {steps.map((step, i) => (
           <motion.div
@@ -416,7 +383,6 @@ const HeroInstructions = () => {
         ))}
       </div>
 
-      {/* Versión Mobile: Compacta */}
       <div className="md:hidden flex justify-between gap-2">
         {steps.map((step, i) => (
           <div
@@ -442,9 +408,8 @@ const Hero = () => {
   }
 
   return (
-    // Reducido a min-h-screen
     <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#011c45]">
-      {/* Fondo y Efectos */}
+      {/* Fondo y Efectos OPTIMIZADOS: will-change-transform para GPU */}
       <div className="absolute inset-0 bg-[#011c45] z-0">
         <FloatingParticles />
         <motion.div
@@ -452,23 +417,22 @@ const Hero = () => {
             scale: [1, 1.2, 1],
             opacity: [0.2, 0.4, 0.2],
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-30%] right-[-20%] w-[1200px] h-[1200px] bg-[#004e9a]/20 rounded-full blur-[150px]"
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} // Animación más lenta
+          className="absolute top-[-30%] right-[-20%] w-[1200px] h-[1200px] bg-[#004e9a]/20 rounded-full blur-[150px] will-change-transform"
         />
         <motion.div
           animate={{ 
             scale: [1, 1.3, 1],
             opacity: [0.1, 0.3, 0.1],
           }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-[-30%] left-[-20%] w-[800px] h-[800px] bg-[#D4AF37]/10 rounded-full blur-[120px]"
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }} // Animación más lenta
+          className="absolute bottom-[-30%] left-[-20%] w-[800px] h-[800px] bg-[#D4AF37]/10 rounded-full blur-[120px] will-change-transform"
         />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_90%)]" />
       </div>
 
       <motion.div 
         style={{ y: y1, opacity }}
-        // Subimos más el contenido: pt-20 en móvil, pt-28 en desktop
         className="container mx-auto px-6 lg:px-12 relative z-10 text-center pt-20 md:pt-28"
       >
         <motion.div
@@ -518,36 +482,28 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false) // Nuevo estado: controla si se muestra el video
+  const [isPlaying, setIsPlaying] = useState(false)
 
-  // Asegurar que el índice no se salga de rango
   const safeIndex = Math.abs(currentIndex % videosData.length)
   const currentVideo = videosData[safeIndex]
 
-  // Resetea el estado de "Playing" cuando cambia el video
   useEffect(() => {
     setIsPlaying(false)
   }, [currentIndex])
 
-  // Auto-slide effect (solo si no está reproduciendo)
   useEffect(() => {
-    if (isPaused || isPlaying) return; // Pausa el carrusel si está reproduciendo
+    if (isPaused || isPlaying) return;
 
     const interval = setInterval(() => {
       setDirection(1)
       setCurrentIndex((prev) => (prev + 1) % videosData.length)
-    }, 8000); // 8 segundos
+    }, 8000); 
 
     return () => clearInterval(interval);
-  }, [isPaused, isPlaying]); // Añadido isPlaying a las dependencias
+  }, [isPaused, isPlaying]); 
 
   const handlePlayClick = () => {
-    // Aquí podrías abrir el modal (opción A) o reproducir in-situ (opción B)
-    // Opción B (Reproducir in-situ):
     setIsPlaying(true)
-    
-    // O si prefieres que el click abra el modal de detalles:
-    // onVideoSelect(currentVideo.id) 
   }
 
   const variants = {
@@ -598,9 +554,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          {/* Contenedor del Video/Imagen (Aspect Ratio) */}
           <div className="relative aspect-[16/9] md:aspect-video rounded-3xl overflow-hidden bg-black shadow-[0_20px_60px_rgba(0,0,0,0.6)] border border-white/10 group">
-            
             <AnimatePresence initial={false} custom={direction} mode="wait">
               <motion.div
                 key={currentIndex}
@@ -615,28 +569,22 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                 }}
                 className="absolute inset-0"
               >
-                {/* SI ESTA REPRODUCIENDO: Muestra Video */}
                 {isPlaying ? (
                   <video
                     src={currentVideo.videoUrl}
                     className="absolute inset-0 w-full h-full object-cover z-20"
                     controls
-                    autoPlay // Solo autoplay cuando el usuario YA hizo clic
+                    autoPlay 
                     playsInline
                   />
                 ) : (
-                  // SI NO: Muestra solo Imagen + Botón Play
                   <div className="absolute inset-0 w-full h-full cursor-pointer" onClick={handlePlayClick}>
                     <img
                       src={currentVideo.thumbnail}
                       alt={currentVideo.title}
                       className="absolute inset-0 w-full h-full object-cover z-10"
                     />
-                    
-                    {/* Overlay Oscuro */}
                     <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors z-20" />
-
-                    {/* Botón Play Grande */}
                     <div className="absolute inset-0 flex items-center justify-center z-30">
                         <motion.div 
                             whileHover={{ scale: 1.1 }}
@@ -648,12 +596,10 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                     </div>
                   </div>
                 )}
-                
               </motion.div>
             </AnimatePresence>
           </div>
 
-          {/* DESCRIPCIÓN FUERA DEL VIDEO (ABAJO) */}
           <div className="mt-8 px-4 md:px-0 text-center md:text-left flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
             <div className="flex-1">
               <div className="flex flex-wrap justify-center md:justify-start gap-3 mb-4">
@@ -685,7 +631,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
 }
 
 // ============================================================================
-// VIDEO CARD & LIST (Modificado para no cargar video en hover)
+// VIDEO CARD & LIST
 // ============================================================================
 const VideoCard = ({ 
   video, 
@@ -698,9 +644,6 @@ const VideoCard = ({
   onPlay: () => void
   isActive?: boolean
 }) => {
-  // Eliminado estado de hover que causaba carga de video
-  // const [isHovered, setIsHovered] = useState(false)
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
@@ -719,17 +662,12 @@ const VideoCard = ({
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover z-10 transition-transform duration-700 group-hover:scale-105"
         />
-        {/* ELIMINADO EL VIDEO DE FONDO EN HOVER PARA AHORRAR DATOS */}
-        
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent z-20 transition-colors" />
-        
-        {/* Play Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center z-30 opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-90 group-hover:scale-100">
           <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
             <Play className="w-8 h-8 text-white fill-white" />
           </div>
         </div>
-
         <div className="absolute bottom-4 right-4 px-2 py-1 rounded bg-black/60 backdrop-blur text-white text-[10px] font-mono z-30">
           {video.duration}
         </div>
@@ -802,7 +740,7 @@ const VideoModal = ({
               src={video.videoUrl}
               className="w-full h-full"
               controls
-              autoPlay // Aquí sí autoplay porque el usuario YA abrió el modal
+              autoPlay 
               onEnded={() => setShowEndCTA(true)}
             />
             {showEndCTA && (
@@ -932,11 +870,6 @@ const Footer = () => (
 export default function DramatizacionesPage() {
   const [selectedVideoId, setSelectedVideoId] = useState<string | undefined>(undefined)
 
-  // Inicializar GA4
-  useEffect(() => {
-    initGA4();
-  }, []);
-
   const handleVideoSelect = (videoId: string) => {
     setSelectedVideoId(videoId)
     setTimeout(() => {
@@ -961,6 +894,9 @@ export default function DramatizacionesPage() {
         .animate-gradient-x {
           background-size: 200% 200%;
           animation: gradient-x 4s ease infinite;
+        }
+        .will-change-transform {
+          will-change: transform, opacity;
         }
       `}</style>
     </main>

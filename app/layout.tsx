@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { GoogleAnalytics } from '@next/third-parties/google'; // Importamos el componente optimizado
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +15,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// ID de medición de GA4
+const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+
 export const metadata: Metadata = {
-  // Define la URL base para resolver rutas relativas de imágenes social media
   metadataBase: new URL('https://manuelsolisvisas.vercel.app'),
   
   title: {
@@ -33,7 +36,7 @@ export const metadata: Metadata = {
     siteName: "Manuel Solis Training Center",
     images: [
       {
-        url: "/images/og-image.jpg", // *Nota: Asegúrate de subir esta imagen a public/images/
+        url: "/images/og-image.jpg", 
         width: 1200,
         height: 630,
         alt: "Manuel Solis Training Center",
@@ -83,6 +86,8 @@ export default function RootLayout({
         {children}
         <Analytics />
         <SpeedInsights />
+        {/* Google Analytics optimizado, no bloquea el hilo principal */}
+        <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
       </body>
     </html>
   );
