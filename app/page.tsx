@@ -22,6 +22,16 @@ import {
 } from 'lucide-react'
 
 // ============================================================================
+// SOLUCIÓN DE TIPOS PARA TYPESCRIPT (Corrige el error de compilación)
+// ============================================================================
+declare global {
+  interface Window {
+    dataLayer: any[];
+    gtag: (...args: any[]) => void;
+  }
+}
+
+// ============================================================================
 // CONFIGURACIÓN DE ANALÍTICA (GA4)
 // ============================================================================
 
@@ -34,18 +44,22 @@ const initGA4 = () => {
     script.async = true;
     document.head.appendChild(script);
 
+    // Ahora TypeScript sabe que dataLayer existe gracias a la interfaz arriba
     window.dataLayer = window.dataLayer || [];
-    function gtag(...args: any[]) {
+    
+    // Definimos gtag y lo asignamos a window para que esté disponible globalmente
+    window.gtag = function(...args: any[]) {
       window.dataLayer.push(args);
     }
-    gtag('js', new Date());
-    gtag('config', GA_MEASUREMENT_ID);
+    
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID);
   }
 };
 
 const track = (eventName: string, parameters?: any) => {
-  if (typeof window !== 'undefined' && (window as any).gtag) {
-    (window as any).gtag('event', eventName, parameters);
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', eventName, parameters);
   }
   console.log(`[GA4 Event] ${eventName}`, parameters);
 }
@@ -498,40 +512,42 @@ const Hero = () => {
 }
 
 // ============================================================================
-// VIDEO CAROUSEL (AUTOMATICO SIN CONTROLES, 8 SEGUNDOS)
+// VIDEO CAROUSEL (SOLO IMAGEN HASTA CLICK)
 // ============================================================================
 const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => void }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [direction, setDirection] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false) // Nuevo estado: controla si se muestra el video
 
   // Asegurar que el índice no se salga de rango
   const safeIndex = Math.abs(currentIndex % videosData.length)
   const currentVideo = videosData[safeIndex]
 
-  // Auto-play effect
+  // Resetea el estado de "Playing" cuando cambia el video
   useEffect(() => {
-    if (isPaused) return;
+    setIsPlaying(false)
+  }, [currentIndex])
+
+  // Auto-slide effect (solo si no está reproduciendo)
+  useEffect(() => {
+    if (isPaused || isPlaying) return; // Pausa el carrusel si está reproduciendo
 
     const interval = setInterval(() => {
       setDirection(1)
-      setIsVideoLoaded(false)
       setCurrentIndex((prev) => (prev + 1) % videosData.length)
     }, 8000); // 8 segundos
 
     return () => clearInterval(interval);
-  }, [isPaused]);
+  }, [isPaused, isPlaying]); // Añadido isPlaying a las dependencias
 
-  const handleVideoClick = () => {
-    onVideoSelect(currentVideo.id)
-  }
-
-  const onVideoDataLoaded = () => {
-    // Intentar asegurar que el video esté visible una vez cargado
-    setTimeout(() => {
-      setIsVideoLoaded(true)
-    }, 200)
+  const handlePlayClick = () => {
+    // Aquí podrías abrir el modal (opción A) o reproducir in-situ (opción B)
+    // Opción B (Reproducir in-situ):
+    setIsPlaying(true)
+    
+    // O si prefieres que el click abra el modal de detalles:
+    // onVideoSelect(currentVideo.id) 
   }
 
   const variants = {
@@ -597,30 +613,41 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                   x: { type: "spring", stiffness: 300, damping: 30 },
                   opacity: { duration: 0.4 }
                 }}
-                className="absolute inset-0 cursor-pointer"
-                onClick={handleVideoClick}
+                className="absolute inset-0"
               >
-                {/* Imagen de Fondo */}
-                <img
-                  src={currentVideo.thumbnail}
-                  alt={currentVideo.title}
-                  className="absolute inset-0 w-full h-full object-cover z-10"
-                  style={{ opacity: isVideoLoaded ? 0 : 1 }}
-                />
+                {/* SI ESTA REPRODUCIENDO: Muestra Video */}
+                {isPlaying ? (
+                  <video
+                    src={currentVideo.videoUrl}
+                    className="absolute inset-0 w-full h-full object-cover z-20"
+                    controls
+                    autoPlay // Solo autoplay cuando el usuario YA hizo clic
+                    playsInline
+                  />
+                ) : (
+                  // SI NO: Muestra solo Imagen + Botón Play
+                  <div className="absolute inset-0 w-full h-full cursor-pointer" onClick={handlePlayClick}>
+                    <img
+                      src={currentVideo.thumbnail}
+                      alt={currentVideo.title}
+                      className="absolute inset-0 w-full h-full object-cover z-10"
+                    />
+                    
+                    {/* Overlay Oscuro */}
+                    <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors z-20" />
 
-                {/* Video de Fondo */}
-                <video
-                  src={currentVideo.videoUrl}
-                  className="absolute inset-0 w-full h-full object-cover z-0"
-                  muted
-                  loop
-                  autoPlay
-                  playsInline
-                  onLoadedData={onVideoDataLoaded}
-                />
-                
-                {/* SIN BOTÓN DE PLAY GIGANTE */}
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors z-20" />
+                    {/* Botón Play Grande */}
+                    <div className="absolute inset-0 flex items-center justify-center z-30">
+                        <motion.div 
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            className="w-20 h-20 md:w-24 md:h-24 bg-white/10 backdrop-blur-md border border-white/30 rounded-full flex items-center justify-center shadow-lg group-hover:bg-[#D4AF37]/80 group-hover:border-[#D4AF37] transition-all duration-300"
+                        >
+                            <Play className="w-8 h-8 md:w-10 md:h-10 text-white fill-white ml-1" />
+                        </motion.div>
+                    </div>
+                  </div>
+                )}
                 
               </motion.div>
             </AnimatePresence>
@@ -658,7 +685,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
 }
 
 // ============================================================================
-// VIDEO CARD & LIST
+// VIDEO CARD & LIST (Modificado para no cargar video en hover)
 // ============================================================================
 const VideoCard = ({ 
   video, 
@@ -671,18 +698,8 @@ const VideoCard = ({
   onPlay: () => void
   isActive?: boolean
 }) => {
-  const [isHovered, setIsHovered] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    if (isHovered && videoRef.current) {
-        const playPromise = videoRef.current.play()
-        if (playPromise !== undefined) playPromise.catch(() => {})
-    } else if (!isHovered && videoRef.current) {
-        videoRef.current.pause()
-        videoRef.current.currentTime = 0
-    }
-  }, [isHovered])
+  // Eliminado estado de hover que causaba carga de video
+  // const [isHovered, setIsHovered] = useState(false)
 
   return (
     <motion.div
@@ -690,8 +707,6 @@ const VideoCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.7, delay: index * 0.1 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={onPlay}
       className={`group relative rounded-2xl overflow-hidden cursor-pointer bg-[#001c40] border border-white/5 transition-all duration-500 hover:shadow-2xl hover:shadow-[#011c45]/50 ${
         isActive ? 'ring-2 ring-[#D4AF37]' : ''
@@ -704,14 +719,8 @@ const VideoCard = ({
             loading="lazy"
             className="absolute inset-0 w-full h-full object-cover z-10 transition-transform duration-700 group-hover:scale-105"
         />
-        <video
-          ref={videoRef}
-          src={video.videoUrl}
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 z-20 ${
-              isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
-          muted loop playsInline preload="none" 
-        />
+        {/* ELIMINADO EL VIDEO DE FONDO EN HOVER PARA AHORRAR DATOS */}
+        
         <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent z-20 transition-colors" />
         
         {/* Play Button Overlay */}
@@ -793,7 +802,7 @@ const VideoModal = ({
               src={video.videoUrl}
               className="w-full h-full"
               controls
-              autoPlay
+              autoPlay // Aquí sí autoplay porque el usuario YA abrió el modal
               onEnded={() => setShowEndCTA(true)}
             />
             {showEndCTA && (
