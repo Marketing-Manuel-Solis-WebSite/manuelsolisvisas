@@ -51,7 +51,7 @@ const videosData: VideoItem[] = [
     category: 'Visa',
     duration: '3:24',
     description: 'Una mirada profunda a cómo la ley protege a quienes han sufrido en silencio. Descubre los pasos hacia la libertad y la seguridad legal.',
-    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/Preview%20VAWA.mp4',
+    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20VAWA%20VERSION%2001.mp4',
     thumbnail: '/images/thumbnail-1.png'
   },
   {
@@ -60,7 +60,7 @@ const videosData: VideoItem[] = [
     category: 'Visa',
     duration: '4:15',
     description: 'Cómo transformar una situación difícil en una oportunidad legal.',
-    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/PREVIEW%20VISA%20U2.mp4',
+    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20U%20VERSI%C3%93N%202%20.mp4',
     thumbnail: '/images/thumbnail-2.png'
   },
   {
@@ -69,7 +69,7 @@ const videosData: VideoItem[] = [
     category: 'Visa',
     duration: '3:45',
     description: 'El primer paso para recuperar la tranquilidad.',
-    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/PREVIEW%20VISA%20U1.mp4',
+    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/DRAMA%20VISAS%20GENERAL.mp4',
     thumbnail: '/images/thumbnail-3.png'
   },
   {
@@ -78,7 +78,7 @@ const videosData: VideoItem[] = [
     category: 'Visa',
     duration: '5:20',
     description: 'Relato sobre la libertad y la protección legal.',
-    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%202.mp4',
+    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%2002.mp4',
     thumbnail: '/images/thumbnail-4.png'
   },
   {
@@ -543,7 +543,7 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
             Historias Destacadas
           </span>
           <h2 className="text-3xl md:text-5xl font-bold text-white">
-             Casos de <span className="text-[#D4AF37]">Éxito</span>
+              Casos de <span className="text-[#D4AF37]">Éxito</span>
           </h2>
         </motion.div>
 
@@ -805,11 +805,11 @@ const VideoGallery = ({ initialVideoId }: { initialVideoId?: string }) => {
             </p>
           </div>
           <div className="flex items-center gap-4">
-             <GreenCallButton showText={false} className="w-12 h-12 !p-0" />
-             <div className="text-right hidden md:block">
-               <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">¿Tienes dudas?</p>
-               <p className="text-white text-sm">Nuestros expertos están listos</p>
-             </div>
+              <GreenCallButton showText={false} className="w-12 h-12 !p-0" />
+              <div className="text-right hidden md:block">
+                <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-widest">¿Tienes dudas?</p>
+                <p className="text-white text-sm">Nuestros expertos están listos</p>
+              </div>
           </div>
         </motion.div>
 
