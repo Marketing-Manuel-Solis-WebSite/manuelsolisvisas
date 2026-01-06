@@ -6,7 +6,6 @@ import {
   AnimatePresence, 
   useScroll, 
   useTransform,
-  useInView
 } from 'framer-motion'
 import { 
   Play, 
@@ -20,12 +19,29 @@ import {
   ArrowRight
 } from 'lucide-react'
 
+// ============================================================================
+// SISTEMA DE ANALYTICS MEJORADO
+// ============================================================================
 
-const track = (eventName: string, parameters?: any) => {
+// Definimos la estructura del evento para TypeScript
+type AnalyticsEventParams = {
+  video_title?: string;
+  video_id?: string;
+  video_category?: string;
+  percent?: number;
+  load_time_ms?: number;
+  duration?: number | string; // CORRECCIÓN: Aceptamos number o string
+  [key: string]: any;
+};
+
+const track = (eventName: string, parameters?: AnalyticsEventParams) => {
+  // Verificamos si window y gtag existen (contexto del navegador)
   if (typeof window !== 'undefined' && (window as any).gtag) {
     (window as any).gtag('event', eventName, parameters);
+    
+    // LOG PARA DEPURACIÓN (Borrar en producción si se desea)
+    // console.log(`📡 [Analytics] ${eventName}`, parameters);
   }
-  // console.log(`[GA4 Event] ${eventName}`, parameters); // Comentado para producción
 }
 
 // ============================================================================
@@ -86,7 +102,6 @@ const videosData: VideoItem[] = [
     duration: '6:10',
     description: 'Protección para menores que buscan un futuro seguro.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20JUVENIL%20DRAMATIZACION.mp4',
-    // REAJUSTE: Cambiado thumbnail-6 por thumbnail-3 para evitar usar la imagen 6
     thumbnail: '/images/thumbnail-5.png' 
   }
 ]
@@ -97,7 +112,6 @@ const videosData: VideoItem[] = [
 function seededShuffle<T>(array: T[], seed: number): T[] {
   const result = [...array]
   let currentIndex = result.length
-  // Algoritmo simple para evitar cálculos complejos innecesarios
   const seededRandom = () => {
     seed = (seed * 9301 + 49297) % 233280
     return seed / 233280
@@ -123,8 +137,6 @@ function getSessionSeed(): number {
 // COMPONENTES UI OPTIMIZADOS
 // ============================================================================
 
-// OPTIMIZACIÓN: Imagen de ruido estática en base64 en lugar de filtro SVG calculado.
-// Esto reduce el uso de GPU en un 90%.
 const NoiseOverlay = () => (
   <div 
     className="fixed inset-0 pointer-events-none z-[100] opacity-[0.04] mix-blend-overlay"
@@ -135,14 +147,12 @@ const NoiseOverlay = () => (
   />
 )
 
-// OPTIMIZACIÓN: Reducido número de partículas y simplificado el ciclo.
 const FloatingParticles = () => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-    {/* Reducido de 20 a 12 partículas para menor carga en móviles */}
     {[...Array(12)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute w-1 h-1 bg-[#D4AF37]/30 rounded-full will-change-transform" // will-change ayuda a la GPU
+        className="absolute w-1 h-1 bg-[#D4AF37]/30 rounded-full will-change-transform"
         style={{
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
@@ -152,7 +162,7 @@ const FloatingParticles = () => (
           opacity: [0, 0.8, 0],
         }}
         transition={{
-          duration: 10 + Math.random() * 10, // Animación más lenta para menos repintados
+          duration: 10 + Math.random() * 10,
           repeat: Infinity,
           delay: Math.random() * 5,
           ease: "linear"
@@ -167,7 +177,7 @@ const GreenCallButton = ({ className = "", showText = true }: { className?: stri
     href="tel:+18883707022" 
     whileHover={{ scale: 1.05 }}
     whileTap={{ scale: 0.95 }}
-    onClick={() => track('click_call_button')}
+    onClick={() => track('click_call_button', { location: 'button_component' })}
     className={`flex items-center gap-3 bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold rounded-full shadow-[0_0_20px_rgba(37,211,102,0.4)] transition-all z-40 cursor-pointer ${className}`}
   >
     <div className="w-10 h-10 flex items-center justify-center rounded-full bg-white/20">
@@ -255,6 +265,7 @@ const Header = () => {
               rel="noopener noreferrer"
               className="flex items-center gap-4 group"
               whileHover={{ scale: 1.02 }}
+              onClick={() => track('click_outbound', { destination: 'manuelsolis_home' })}
             >
               <div className="relative w-16 h-16 md:w-24 md:h-24">
                 <img 
@@ -275,6 +286,7 @@ const Header = () => {
                   href={`#${item.toLowerCase()}`}
                   className="relative text-white/70 hover:text-white text-[11px] uppercase tracking-[0.25em] font-medium transition-colors duration-300 py-2"
                   whileHover={{ y: -2 }}
+                  onClick={() => track('click_nav', { item })}
                 >
                   {item}
                   <motion.span 
@@ -293,6 +305,7 @@ const Header = () => {
                 rel="noopener noreferrer"
                 className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:border-[#D4AF37]/50 text-[10px] uppercase tracking-[0.2em] transition-all duration-300"
                 whileHover={{ scale: 1.02 }}
+                onClick={() => track('click_outbound', { destination: 'portal_principal' })}
               >
                 <ExternalLink className="w-3 h-3" />
                 Portal Principal
@@ -394,12 +407,12 @@ const Hero = () => {
   const opacity = useTransform(scrollY, [0, 400], [1, 0])
   
   const scrollToVideos = () => {
+    track('click_cta', { label: 'ver_historias_hero' })
     document.getElementById('historias')?.scrollIntoView({ behavior: 'smooth' })
   }
 
   return (
     <section id="inicio" className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#011c45]">
-      {/* Fondo y Efectos OPTIMIZADOS: will-change-transform para GPU */}
       <div className="absolute inset-0 bg-[#011c45] z-0">
         <FloatingParticles />
         <motion.div
@@ -407,7 +420,7 @@ const Hero = () => {
             scale: [1, 1.2, 1],
             opacity: [0.2, 0.4, 0.2],
           }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} // Animación más lenta
+          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }} 
           className="absolute top-[-30%] right-[-20%] w-[1200px] h-[1200px] bg-[#004e9a]/20 rounded-full blur-[150px] will-change-transform"
         />
         <motion.div
@@ -415,7 +428,7 @@ const Hero = () => {
             scale: [1, 1.3, 1],
             opacity: [0.1, 0.3, 0.1],
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }} // Animación más lenta
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           className="absolute bottom-[-30%] left-[-20%] w-[800px] h-[800px] bg-[#D4AF37]/10 rounded-full blur-[120px] will-change-transform"
         />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_at_center,black_40%,transparent_90%)]" />
@@ -466,35 +479,37 @@ const Hero = () => {
 }
 
 // ============================================================================
-// VIDEO CAROUSEL (SOLO IMAGEN HASTA CLICK)
+// VIDEO CAROUSEL
 // ============================================================================
 const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => void }) => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
   const [isPaused, setIsPaused] = useState(false)
-  const [isPlaying, setIsPlaying] = useState(false)
+  
+  // Nota: Quitamos el isPlaying del carrusel para forzar que el usuario
+  // abra el Modal para ver el video completo y tener mejor tracking.
+  // El carrusel sirve de "preview" visual.
 
   const safeIndex = Math.abs(currentIndex % videosData.length)
   const currentVideo = videosData[safeIndex]
 
   useEffect(() => {
-    setIsPlaying(false)
-  }, [currentIndex])
+    if (isPaused) return;
 
-  useEffect(() => {
-    if (isPaused || isPlaying) return;
-
-    // REAJUSTE: Velocidad aumentada a 3.5 segundos (3500ms)
     const interval = setInterval(() => {
       setDirection(1)
       setCurrentIndex((prev) => (prev + 1) % videosData.length)
     }, 3500); 
 
     return () => clearInterval(interval);
-  }, [isPaused, isPlaying]); 
+  }, [isPaused]); 
 
   const handlePlayClick = () => {
-    setIsPlaying(true)
+    track('click_video_carousel', { 
+        video_title: currentVideo.title, 
+        video_id: currentVideo.id 
+    })
+    onVideoSelect(currentVideo.id)
   }
 
   const variants = {
@@ -560,15 +575,6 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                 }}
                 className="absolute inset-0"
               >
-                {isPlaying ? (
-                  <video
-                    src={currentVideo.videoUrl}
-                    className="absolute inset-0 w-full h-full object-cover z-20"
-                    controls
-                    autoPlay 
-                    playsInline
-                  />
-                ) : (
                   <div className="absolute inset-0 w-full h-full cursor-pointer" onClick={handlePlayClick}>
                     <img
                       src={currentVideo.thumbnail}
@@ -586,7 +592,6 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
                         </motion.div>
                     </div>
                   </div>
-                )}
               </motion.div>
             </AnimatePresence>
           </div>
@@ -641,7 +646,10 @@ const VideoCard = ({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.7, delay: index * 0.1 }}
-      onClick={onPlay}
+      onClick={() => {
+        track('click_video_card', { video_title: video.title, video_id: video.id });
+        onPlay();
+      }}
       className={`group relative rounded-2xl overflow-hidden cursor-pointer bg-[#001c40] border border-white/5 transition-all duration-500 hover:shadow-2xl hover:shadow-[#011c45]/50 ${
         isActive ? 'ring-2 ring-[#D4AF37]' : ''
       }`}
@@ -681,7 +689,7 @@ const VideoCard = ({
 }
 
 // ============================================================================
-// VIDEO MODAL
+// VIDEO MODAL (CON ANALYTICS AVANZADO)
 // ============================================================================
 const VideoModal = ({
   isOpen,
@@ -696,12 +704,85 @@ const VideoModal = ({
 }) => {
   const [showEndCTA, setShowEndCTA] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
+  
+  // Refs para control de analytics
+  const hasStartedRef = useRef(false)
+  const loadStartRef = useRef<number>(0)
+  const trackedThresholds = useRef<Set<number>>(new Set())
 
+  // Reiniciar estado al cambiar de video
   useEffect(() => {
     setShowEndCTA(false)
+    hasStartedRef.current = false
+    trackedThresholds.current.clear()
+    loadStartRef.current = 0
   }, [video?.id])
 
   if (!isOpen || !video) return null
+
+  // Handler: Inicio de carga (para medir performance)
+  const handleLoadStart = () => {
+    loadStartRef.current = Date.now()
+  }
+
+  // Handler: Video listo para reproducir (calcula tiempo de carga)
+  const handleCanPlay = () => {
+    if (loadStartRef.current > 0) {
+        const loadTime = Date.now() - loadStartRef.current;
+        track('video_performance', {
+            video_title: video.title,
+            video_id: video.id,
+            load_time_ms: loadTime
+        });
+        loadStartRef.current = 0; // Reset para no duplicar si hay seek
+    }
+  }
+
+  // Handler: El usuario da Play (o autoplay inicia)
+  const handlePlay = () => {
+    if (!hasStartedRef.current) {
+        track('video_start', {
+            video_title: video.title,
+            video_id: video.id,
+            video_category: video.category
+        });
+        hasStartedRef.current = true;
+    }
+  }
+
+  // Handler: Progreso del video (5% - 100%)
+  const handleTimeUpdate = () => {
+    if (!videoRef.current) return;
+    
+    const { currentTime, duration } = videoRef.current;
+    if (!duration) return;
+
+    const percent = Math.floor((currentTime / duration) * 100);
+    
+    // Umbrales que queremos rastrear
+    const milestones = [5, 25, 50, 75, 90];
+
+    milestones.forEach((milestone) => {
+        if (percent >= milestone && !trackedThresholds.current.has(milestone)) {
+            trackedThresholds.current.add(milestone);
+            track('video_progress', {
+                video_title: video.title,
+                video_id: video.id,
+                percent: milestone
+            });
+        }
+    });
+  }
+
+  // Handler: Video terminado
+  const handleEnded = () => {
+    track('video_complete', {
+        video_title: video.title,
+        video_id: video.id,
+        duration: video.duration 
+    });
+    setShowEndCTA(true);
+  }
 
   return (
     <AnimatePresence>
@@ -732,7 +813,13 @@ const VideoModal = ({
               className="w-full h-full"
               controls
               autoPlay 
-              onEnded={() => setShowEndCTA(true)}
+              playsInline
+              // EVENTOS DE ANALYTICS CONECTADOS
+              onLoadStart={handleLoadStart}
+              onCanPlay={handleCanPlay}
+              onPlay={handlePlay}
+              onTimeUpdate={handleTimeUpdate}
+              onEnded={handleEnded}
             />
             {showEndCTA && (
               <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-center p-8 z-50">
@@ -742,7 +829,10 @@ const VideoModal = ({
                 <div className="flex gap-4">
                   <GreenCallButton showText={true} className="px-6" />
                   <button 
-                    onClick={onNext}
+                    onClick={() => {
+                        track('click_next_video', { from_video: video.title });
+                        onNext();
+                    }}
                     className="px-6 py-3 rounded-full border border-white/20 text-white hover:bg-white/10 transition-colors"
                   >
                     Ver siguiente historia
