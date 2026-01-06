@@ -20,8 +20,6 @@ import {
   ArrowRight
 } from 'lucide-react'
 
-// NOTA: Se eliminó la carga manual de GA4 aquí. 
-// Ahora se maneja de forma optimizada en app/layout.tsx
 
 const track = (eventName: string, parameters?: any) => {
   if (typeof window !== 'undefined' && (window as any).gtag) {
@@ -96,7 +94,7 @@ const videosData: VideoItem[] = [
     category: 'Visa',
     duration: '6:10',
     description: 'Protección para menores que buscan un futuro seguro.',
-    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/Preview%20VISA%20SIJS.mp4',
+    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20JUVENIL%20DRAMATIZACION.mp4',
     thumbnail: '/images/thumbnail-6.png'
   }
 ]
