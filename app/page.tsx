@@ -59,7 +59,7 @@ const videosData: VideoItem[] = [
     duration: '4:15',
     description: 'Cómo transformar una situación difícil en una oportunidad legal.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20U%20VERSI%C3%93N%202%20.mp4',
-    thumbnail: '/images/thumbnail-2.png'
+    thumbnail: '/images/thumbnail-3.png'
   },
   {
     id: 'v3',
@@ -68,7 +68,7 @@ const videosData: VideoItem[] = [
     duration: '3:45',
     description: 'El primer paso para recuperar la tranquilidad.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/DRAMA%20VISAS%20GENERAL.mp4',
-    thumbnail: '/images/thumbnail-3.png'
+    thumbnail: '/images/thumbnail-4.png'
   },
   {
     id: 'v4',
@@ -77,25 +77,17 @@ const videosData: VideoItem[] = [
     duration: '5:20',
     description: 'Relato sobre la libertad y la protección legal.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%2002.mp4',
-    thumbnail: '/images/thumbnail-4.png'
+    thumbnail: '/images/thumbnail-2.png'
   },
   {
     id: 'v5',
-    title: 'Entendiendo la Visa T',
-    category: 'Visa',
-    duration: '4:50',
-    description: 'Información vital para identificar si calificas.',
-    videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20T%20VERSION%2001.mp4',
-    thumbnail: '/images/thumbnail-5.png'
-  },
-  {
-    id: 'v6',
     title: 'Esperanza Juvenil (SIJS)',
     category: 'Visa',
     duration: '6:10',
     description: 'Protección para menores que buscan un futuro seguro.',
     videoUrl: 'https://mudm3arfz84ft0jb.public.blob.vercel-storage.com/VISA%20JUVENIL%20DRAMATIZACION.mp4',
-    thumbnail: '/images/thumbnail-6.png'
+    // REAJUSTE: Cambiado thumbnail-6 por thumbnail-3 para evitar usar la imagen 6
+    thumbnail: '/images/thumbnail-5.png' 
   }
 ]
 
@@ -492,10 +484,11 @@ const VideoCarousel = ({ onVideoSelect }: { onVideoSelect: (videoId: string) => 
   useEffect(() => {
     if (isPaused || isPlaying) return;
 
+    // REAJUSTE: Velocidad aumentada a 3.5 segundos (3500ms)
     const interval = setInterval(() => {
       setDirection(1)
       setCurrentIndex((prev) => (prev + 1) % videosData.length)
-    }, 8000); 
+    }, 3500); 
 
     return () => clearInterval(interval);
   }, [isPaused, isPlaying]); 
