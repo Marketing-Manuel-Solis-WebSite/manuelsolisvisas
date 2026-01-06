@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { GoogleAnalytics } from '@next/third-parties/google'; // Importamos el componente optimizado
+import { GoogleAnalytics } from '@next/third-parties/google'; 
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +15,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// ID de medición de GA4
-const GA_MEASUREMENT_ID = 'G-XXXXXXXXXX';
+// =====================================================================
+// ID DE GOOGLE ANALYTICS (GA4)
+// =====================================================================
+const GA_MEASUREMENT_ID = 'G-ZPXZJPL0BN'; // <--- Tu ID real ya colocado aquí
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://manuelsolisvisas.vercel.app'),
@@ -86,7 +88,7 @@ export default function RootLayout({
         {children}
         <Analytics />
         <SpeedInsights />
-        {/* Google Analytics optimizado, no bloquea el hilo principal */}
+        {/* Componente optimizado de Next.js para GA4 */}
         <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
       </body>
     </html>

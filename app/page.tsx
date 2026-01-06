@@ -18,9 +18,11 @@ import {
   BookOpen,
   ArrowRight
 } from 'lucide-react'
+// Importamos el tracker de Vercel
+import { track as trackVercel } from '@vercel/analytics';
 
 // ============================================================================
-// SISTEMA DE ANALYTICS MEJORADO
+// SISTEMA DE ANALYTICS HÍBRIDO (GOOGLE + VERCEL)
 // ============================================================================
 
 // Definimos la estructura del evento para TypeScript
@@ -30,17 +32,30 @@ type AnalyticsEventParams = {
   video_category?: string;
   percent?: number;
   load_time_ms?: number;
-  duration?: number | string; // CORRECCIÓN: Aceptamos number o string
+  duration?: number | string;
   [key: string]: any;
 };
 
 const track = (eventName: string, parameters?: AnalyticsEventParams) => {
-  // Verificamos si window y gtag existen (contexto del navegador)
+  // 1. Log para ver en consola mientras desarrollas
+  console.log(`📡 [Tracking] ${eventName}`, parameters);
+
+  // 2. Enviar a Google Analytics (GA4)
   if (typeof window !== 'undefined' && (window as any).gtag) {
     (window as any).gtag('event', eventName, parameters);
+  }
+
+  // 3. Enviar a Vercel Analytics
+  // Vercel solo acepta strings, numbers o booleans, convertimos nulls/undefined si es necesario
+  if (parameters) {
+    // Limpiamos parámetros para Vercel si es necesario
+    const vercelParams = Object.fromEntries(
+      Object.entries(parameters).filter(([_, v]) => v != null)
+    ) as Record<string, string | number | boolean>;
     
-    // LOG PARA DEPURACIÓN (Borrar en producción si se desea)
-    // console.log(`📡 [Analytics] ${eventName}`, parameters);
+    trackVercel(eventName, vercelParams);
+  } else {
+    trackVercel(eventName);
   }
 }
 
